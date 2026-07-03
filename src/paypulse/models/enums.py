@@ -34,3 +34,10 @@ class WebhookDeliveryStatus(str, Enum):
     PENDING = "PENDING"
     DELIVERED = "DELIVERED"
     FAILED = "FAILED"
+
+
+class CheckoutStatus(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
