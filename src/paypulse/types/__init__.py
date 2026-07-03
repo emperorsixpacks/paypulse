@@ -1,4 +1,4 @@
-from src.paypulse.types.error import Error, error, httpError
+from src.paypulse.types.error import Error, InternaleServerError, error, httpError
 from src.paypulse.types.http_types import HTTPMethod
 
 __all__ = [
@@ -6,4 +6,5 @@ __all__ = [
     "error",
     "httpError",
     "HTTPMethod",
+    "InternaleServerError",
 ]

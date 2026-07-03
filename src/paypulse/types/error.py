@@ -9,7 +9,7 @@ class error(Exception):
             self.message = None
         super().__init__(self.message)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str | None:
         return self.message
 
     def __eq__(self, value: object, /) -> bool:
@@ -44,3 +44,4 @@ class httpError(error):
 
 
 type Error = error | httpError | None
+InternaleServerError = httpError(500, "Internal server error")
