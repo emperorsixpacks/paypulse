@@ -4,7 +4,7 @@ from enum import StrEnum
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import Column, Field, Relationship
 
-from src.paypulse.models.base import BaseSQLModel, TimestampMixin, UUIDMixin
+from src.paypulse.models.base import Base
 
 
 class OrgRole(StrEnum):
@@ -13,7 +13,7 @@ class OrgRole(StrEnum):
     MEMBER = "member"
 
 
-class Membership(UUIDMixin, TimestampMixin, BaseSQLModel, table=True):
+class Membership(Base, table=True):
     __tablename__ = "memberships"
 
     user_id: uuid.UUID = Field(foreign_key="users.id", nullable=False, index=True)

@@ -1,11 +1,9 @@
-import uuid
-
 from sqlmodel import Field, Relationship
 
-from src.paypulse.models.base import BaseSQLModel, TimestampMixin, UUIDMixin
+from src.paypulse.models.base import Base
 
 
-class User(UUIDMixin, TimestampMixin, BaseSQLModel, table=True):
+class User(Base, table=True):
     __tablename__ = "users"
 
     email: str = Field(unique=True, index=True, nullable=False, max_length=255)

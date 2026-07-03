@@ -1,11 +1,9 @@
-import uuid
-
 from sqlmodel import Field, Relationship
 
-from src.paypulse.models.base import BaseSQLModel, TimestampMixin, UUIDMixin
+from src.paypulse.models.base import Base
 
 
-class Organization(UUIDMixin, TimestampMixin, BaseSQLModel, table=True):
+class Organization(Base, table=True):
     __tablename__ = "organizations"
 
     name: str = Field(nullable=False, max_length=255)
