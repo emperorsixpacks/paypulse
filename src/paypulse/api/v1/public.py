@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.paypulse.core.dependencies import get_db
 from src.paypulse.models.checkout import CheckoutSession
 from src.paypulse.models.enums import CheckoutStatus
-from src.paypulse.models.plan import Plan
+from src.paypulse.models.billing import Plan
 from src.paypulse.repositories.checkout_repository import CheckoutRepository
 from src.paypulse.repositories.plan_repository import PlanRepository
 

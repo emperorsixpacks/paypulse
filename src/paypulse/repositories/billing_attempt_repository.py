@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.paypulse.models.billing_attempt import BillingAttempt
+from src.paypulse.models.billing import BillingAttempt
 from src.paypulse.repositories.base import BaseRepository
 
 

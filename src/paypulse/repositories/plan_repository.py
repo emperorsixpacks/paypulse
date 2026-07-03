@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.paypulse.models.plan import Plan
+from src.paypulse.models.billing import Plan
 from src.paypulse.repositories.base import BaseRepository
 
 

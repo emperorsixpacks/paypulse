@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.models.enums import InvoiceStatus
-from src.paypulse.models.invoice import Invoice
+from src.paypulse.models.billing import Invoice
 from src.paypulse.repositories.base import BaseRepository
 
 
