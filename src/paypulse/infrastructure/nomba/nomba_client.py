@@ -9,23 +9,33 @@ from src.paypulse.infrastructure.nomba.dtos import (
     AccountBalanceResponse,
     AccountDetailsResponse,
     AuthTokenResponse,
+    BankAccountLookupRequest,
     BankAccountLookupResponse,
     BankAccountTransferRequest,
     BankAccountTransferResponse,
     BanksListResponse,
     CancelCheckoutOrderResponse,
+    CancelOrderRequest,
     CreateCheckoutOrderRequest,
     CreateCheckoutOrderResponse,
     CreateVirtualAccountRequest,
     CreateVirtualAccountResponse,
+    DeleteTokenizedCardDataRequest,
+    DeleteTokenizedCardDataResponse,
     FetchCheckoutTransactionResponse,
     FetchTransactionsResponse,
     FetchVirtualAccountResponse,
+    FilterVirtualAccountRequest,
     FilterVirtualAccountsResponse,
     IssueTokenRequest,
     RefundCheckoutTransactionRequest,
     RefundCheckoutTransactionResponse,
+    TokenizedCardListResponse,
+    TokenizedCardPaymentRequest,
+    TokenizedCardPaymentResponse,
     TransactionRequeryResponse,
+    UpdateTokenizedCardDataRequest,
+    UpdateTokenizedCardDataResponse,
     WalletTransferRequest,
     WalletTransferResponse,
 )
@@ -143,7 +153,7 @@ class NombaClient(BaseClient):
         from httpx import AsyncClient
 
         async with AsyncClient() as client:
-            res = await client.post(
+            await client.post(
                 url,
                 headers=self._get_headers(),
                 timeout=30,
@@ -167,7 +177,7 @@ class AccountMixin:
     ) -> tuple[AccountDetailsResponse | None, Error]:
         await self._ensure_authenticated()
         return await self._get(
-            AccountDetailsResponse, path_suffix="/v1/accounts/details"
+            AccountDetailsResponse, path_suffix="/v1/accounts/parent"
         )
 
     async def sub_account_balance(
@@ -180,33 +190,41 @@ class AccountMixin:
         )
 
     async def sub_account_details(
-        self: Any, sub_account_id: str
+        self: Any, sub_account_id: str | None = None, account_ref: str | None = None
     ) -> tuple[AccountDetailsResponse | None, Error]:
         await self._ensure_authenticated()
+        params = {}
+        if sub_account_id:
+            params["accountId"] = sub_account_id
+        if account_ref:
+            params["accountRef"] = account_ref
         return await self._get(
             AccountDetailsResponse,
-            path_suffix=f"/v1/accounts/{sub_account_id}/details",
+            path_suffix="/v1/accounts/sub-account-details",
+            req_params=params or None,
         )
 
 
 class TransferMixin:
     async def bank_transfer(
-        self: Any, request: BankAccountTransferRequest
+        self: Any, request: BankAccountTransferRequest, sub_account_id: str | None = None
     ) -> tuple[BankAccountTransferResponse | None, Error]:
         await self._ensure_authenticated()
+        path = f"/v2/transfers/bank/{sub_account_id}" if sub_account_id else "/v2/transfers/bank"
         return await self._post(
             BankAccountTransferResponse,
-            path_suffix="/v2/transfers/bank",
+            path_suffix=path,
             data=request.model_dump(),
         )
 
     async def wallet_transfer(
-        self: Any, request: WalletTransferRequest
+        self: Any, request: WalletTransferRequest, sub_account_id: str | None = None
     ) -> tuple[WalletTransferResponse | None, Error]:
         await self._ensure_authenticated()
+        path = f"/v2/transfers/wallet/{sub_account_id}" if sub_account_id else "/v2/transfers/wallet"
         return await self._post(
             WalletTransferResponse,
-            path_suffix="/v2/transfers/wallet",
+            path_suffix=path,
             data=request.model_dump(),
         )
 
@@ -214,10 +232,14 @@ class TransferMixin:
         self: Any, account_number: str, bank_code: str
     ) -> tuple[BankAccountLookupResponse | None, Error]:
         await self._ensure_authenticated()
-        return await self._get(
+        request = BankAccountLookupRequest(
+            accountNumber=account_number,
+            bankCode=bank_code,
+        )
+        return await self._post(
             BankAccountLookupResponse,
-            path_suffix="/v1/transfers/lookup",
-            req_params={"accountNumber": account_number, "bankCode": bank_code},
+            path_suffix="/v1/transfers/bank/lookup",
+            data=request.model_dump(),
         )
 
     async def fetch_bank_codes(self: Any) -> tuple[BanksListResponse | None, Error]:
@@ -227,12 +249,13 @@ class TransferMixin:
 
 class VirtualAccountMixin:
     async def create_virtual_account(
-        self: Any, request: CreateVirtualAccountRequest
+        self: Any, request: CreateVirtualAccountRequest, sub_account_id: str | None = None
     ) -> tuple[CreateVirtualAccountResponse | None, Error]:
         await self._ensure_authenticated()
+        path = f"/v1/accounts/virtual/{sub_account_id}" if sub_account_id else "/v1/accounts/virtual"
         return await self._post(
             CreateVirtualAccountResponse,
-            path_suffix="/v1/accounts/virtual",
+            path_suffix=path,
             data=request.model_dump(),
         )
 
@@ -246,13 +269,32 @@ class VirtualAccountMixin:
         )
 
     async def filter_virtual_accounts(
-        self: Any, **params: Any
+        self: Any,
+        request: FilterVirtualAccountRequest | None = None,
+        limit: int | None = None,
+        cursor: str | None = None,
+        **kwargs: Any,
     ) -> tuple[FilterVirtualAccountsResponse | None, Error]:
         await self._ensure_authenticated()
-        return await self._get(
+        req_params = {}
+        if limit is not None:
+            req_params["limit"] = limit
+        elif "limit" in kwargs:
+            req_params["limit"] = kwargs.pop("limit")
+        if cursor is not None:
+            req_params["cursor"] = cursor
+        elif "cursor" in kwargs:
+            req_params["cursor"] = kwargs.pop("cursor")
+
+        if request is None and kwargs:
+            request = FilterVirtualAccountRequest(**kwargs)
+
+        body = request.model_dump(exclude_none=True) if request else {}
+        return await self._post(
             FilterVirtualAccountsResponse,
-            path_suffix="/v1/accounts/virtual",
-            req_params=params or None,
+            path_suffix="/v1/accounts/virtual/list",
+            data=body if body else None,
+            req_params=req_params if req_params else None,
         )
 
 
@@ -280,9 +322,11 @@ class CheckoutMixin:
         self: Any, order_reference: str
     ) -> tuple[CancelCheckoutOrderResponse | None, Error]:
         await self._ensure_authenticated()
+        request = CancelOrderRequest(orderReference=order_reference)
         return await self._post(
             CancelCheckoutOrderResponse,
-            path_suffix=f"/v1/checkout/order/{order_reference}/cancel",
+            path_suffix="/v1/checkout/order/cancel",
+            data=request.model_dump(),
         )
 
     async def refund_checkout_transaction(
@@ -295,25 +339,88 @@ class CheckoutMixin:
             data=request.model_dump(exclude_none=True),
         )
 
+    async def tokenized_card_payment(
+        self: Any, request: TokenizedCardPaymentRequest
+    ) -> tuple[TokenizedCardPaymentResponse | None, Error]:
+        await self._ensure_authenticated()
+        return await self._post(
+            TokenizedCardPaymentResponse,
+            path_suffix="/v1/checkout/tokenized-card-payment",
+            data=request.model_dump(exclude_none=True),
+        )
+
+    async def list_tokenized_cards(
+        self: Any,
+        customer_email: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        page: int | None = None,
+    ) -> tuple[TokenizedCardListResponse | None, Error]:
+        await self._ensure_authenticated()
+        params = {}
+        if customer_email is not None:
+            params["customerEmail"] = customer_email
+        if start_date is not None:
+            params["startDate"] = start_date
+        if end_date is not None:
+            params["endDate"] = end_date
+        if page is not None:
+            params["page"] = page
+        return await self._get(
+            TokenizedCardListResponse,
+            path_suffix="/v1/checkout/tokenized-card-data",
+            req_params=params or None,
+        )
+
+    async def update_tokenized_card_data(
+        self: Any, request: UpdateTokenizedCardDataRequest
+    ) -> tuple[UpdateTokenizedCardDataResponse | None, Error]:
+        await self._ensure_authenticated()
+        return await self._post(
+            UpdateTokenizedCardDataResponse,
+            path_suffix="/v1/checkout/tokenized-card-data",
+            data=request.model_dump(),
+        )
+
+    async def delete_tokenized_card_data(
+        self: Any, request: DeleteTokenizedCardDataRequest
+    ) -> tuple[DeleteTokenizedCardDataResponse | None, Error]:
+        await self._ensure_authenticated()
+        from src.paypulse.types import HTTPMethod
+        # Delete helper doesn't exist in base class, so we can use _send
+        url = self._get_url("/v1/checkout/tokenized-card-data")
+        res, err = await self._send(url, HTTPMethod.DELETE, data=request.model_dump())
+        if err:
+            return None, err
+        return self._process_response(res, DeleteTokenizedCardDataResponse)
+
+
 
 class TransactionMixin:
     async def fetch_transactions(
-        self: Any, **params: Any
+        self: Any, sub_account_id: str | None = None, **params: Any
     ) -> tuple[FetchTransactionsResponse | None, Error]:
         await self._ensure_authenticated()
+        path = f"/v1/transactions/accounts/{sub_account_id}" if sub_account_id else "/v1/transactions/accounts"
         return await self._get(
             FetchTransactionsResponse,
-            path_suffix="/v1/transactions",
+            path_suffix=path,
             req_params=params or None,
         )
 
     async def fetch_transaction(
-        self: Any, transaction_id: str
+        self: Any, transaction_id: str, sub_account_id: str | None = None
     ) -> tuple[TransactionRequeryResponse | None, Error]:
         await self._ensure_authenticated()
+        path = (
+            f"/v1/transactions/accounts/{sub_account_id}/single"
+            if sub_account_id
+            else "/v1/transactions/accounts/single"
+        )
         return await self._get(
             TransactionRequeryResponse,
-            path_suffix=f"/v1/transactions/{transaction_id}",
+            path_suffix=path,
+            req_params={"transactionRef": transaction_id},
         )
 
     async def requery_transaction(
@@ -322,8 +429,7 @@ class TransactionMixin:
         await self._ensure_authenticated()
         return await self._get(
             TransactionRequeryResponse,
-            path_suffix="/v1/transactions/requery",
-            req_params={"sessionId": session_id},
+            path_suffix=f"/v1/transactions/requery/{session_id}",
         )
 
 

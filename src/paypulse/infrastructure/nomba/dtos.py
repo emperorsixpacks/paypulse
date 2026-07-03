@@ -41,6 +41,12 @@ class AccountDetailsData(BaseNombaType):
     bvn: str | None = None
     currency: str | None = None
     timeCreated: datetime | None = None
+    createdAt: datetime | None = None
+    accountHolderId: str | None = None
+    accountRef: str | None = None
+    status: str | None = None
+    type: str | None = None
+    banks: list[Any] | None = None
 
 
 class AccountDetailsResponse(NombaResponse):
@@ -77,7 +83,7 @@ class BankAccountTransferMeta(BaseNombaType):
 
 
 class BankAccountTransferResult(BaseNombaType):
-    amount: str
+    amount: str | float
     source: str | None = None
     sourceUserId: str | None = None
     productId: str | None = None
@@ -102,8 +108,25 @@ class WalletTransferRequest(BaseNombaType):
     merchantTxRef: str
 
 
+class WalletTransferMetaObject(BaseNombaType):
+    merchantTxRef: str | None = None
+    api_client_id: str | None = None
+    api_account_id: str | None = None
+    rrn: str | None = None
+
+
+class WalletTransferResult(BaseNombaType):
+    amount: float | str
+    meta: WalletTransferMetaObject | None = None
+    fee: float | None = None
+    timeCreated: datetime | None = None
+    id: str | None = None
+    type: str | None = None
+    status: str | None = None
+
+
 class WalletTransferResponse(NombaResponse):
-    data: BankAccountTransferResult | None = None
+    data: WalletTransferResult | None = None
 
 
 class Bank(BaseNombaType):
@@ -119,10 +142,15 @@ class BanksListResponse(NombaResponse):
     data: BanksListData
 
 
+class BankAccountLookupRequest(BaseNombaType):
+    accountNumber: str
+    bankCode: str
+
+
 class BankAccountLookupData(BaseNombaType):
     accountNumber: str
     accountName: str
-    bankCode: str
+    bankCode: str | None = None
 
 
 class BankAccountLookupResponse(NombaResponse):
@@ -180,6 +208,17 @@ class FetchVirtualAccountResponse(NombaResponse):
     data: VirtualAccountData | None = None
 
 
+class FilterVirtualAccountRequest(BaseNombaType):
+    accountName: str | None = None
+    accountRef: str | None = None
+    bvn: str | None = None
+    bankAccountNumber: str | None = None
+    dateCreatedFrom: str | None = None
+    dateCreatedTo: str | None = None
+    expired: bool | None = None
+    resourceAcquired: bool | None = None
+
+
 class FilterVirtualAccountsResponse(NombaResponse):
     data: list[VirtualAccountData] | None = None
 
@@ -226,8 +265,17 @@ class FetchCheckoutTransactionResponse(NombaResponse):
     data: CheckoutTransactionData | None = None
 
 
+class CancelOrderRequest(BaseNombaType):
+    orderReference: str
+
+
+class CancelCheckoutOrderData(BaseNombaType):
+    success: bool
+    message: str
+
+
 class CancelCheckoutOrderResponse(NombaResponse):
-    data: dict[str, Any] | None = None
+    data: CancelCheckoutOrderData | None = None
 
 
 class RefundCheckoutTransactionRequest(BaseNombaType):
@@ -241,7 +289,7 @@ class RefundCheckoutTransactionResponse(NombaResponse):
 
 class TransactionData(BaseNombaType):
     id: str | None = None
-    amount: str | None = None
+    amount: str | float | None = None
     type: str | None = None
     status: str | None = None
     accountName: str | None = None
@@ -262,3 +310,64 @@ class FetchTransactionsResponse(NombaResponse):
 
 class TransactionRequeryResponse(NombaResponse):
     data: TransactionData | None = None
+
+
+class TokenizedCardPaymentRequest(BaseNombaType):
+    order: Order | None = None
+    tokenKey: str
+
+
+class TokenizedCardPaymentResult(BaseNombaType):
+    status: bool | str | None = None
+    message: str | None = None
+
+
+class TokenizedCardPaymentResponse(NombaResponse):
+    data: TokenizedCardPaymentResult
+
+
+class TokenizedCardData(BaseNombaType):
+    tokenKey: str
+    customerEmail: str
+    cardType: str | None = None
+    cardPan: str | None = None
+    tokenExpirationDate: str | None = None
+
+
+class TokenizedCardListResult(BaseNombaType):
+    nextPage: str | int | None = None
+    tokenizedCardDataList: list[TokenizedCardData] | None = None
+
+
+class TokenizedCardListResponse(NombaResponse):
+    data: TokenizedCardListResult | None = None
+
+
+class UpdateTokenizedCardDataRequest(BaseNombaType):
+    tokenKey: str
+    currentEmailAddress: str
+    newEmailAddress: str
+
+
+class UpdateTokenizedCardDataResult(BaseNombaType):
+    status: bool | str | None = None
+    message: str | None = None
+    tokenizedCardData: list[TokenizedCardData] | None = None
+
+
+class UpdateTokenizedCardDataResponse(NombaResponse):
+    data: UpdateTokenizedCardDataResult
+
+
+class DeleteTokenizedCardDataRequest(BaseNombaType):
+    tokenKey: str
+
+
+class DeleteTokenizedCardDataResult(BaseNombaType):
+    status: bool | str | None = None
+    message: str | None = None
+
+
+class DeleteTokenizedCardDataResponse(NombaResponse):
+    data: DeleteTokenizedCardDataResult
+
