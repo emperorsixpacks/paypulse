@@ -88,5 +88,52 @@ class Settings(BaseSettings):
             return self.REDIS_URL
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
+    @property
+    def nomba_base_url(self) -> str:
+        return self.NOMBA_BASE_URL
+
+    @property
+    def nomba_client_id(self) -> str:
+        return self.NOMBA_CLIENT_ID
+
+    @property
+    def nomba_client_secret(self) -> str:
+        return self.NOMBA_CLIENT_SECRET
+
+    @property
+    def nomba_account_id(self) -> str:
+        return self.NOMBA_ACCOUNT_ID
+
+
+class NombaConfig:
+    def __init__(
+        self,
+        NOMBA_BASE_URL: str = "https://sandbox.nomba.com",
+        NOMBA_CLIENT_ID: str = "",
+        NOMBA_CLIENT_SECRET: str = "",
+        NOMBA_ACCOUNT_ID: str = "",
+    ) -> None:
+        self.NOMBA_BASE_URL = NOMBA_BASE_URL
+        self.NOMBA_CLIENT_ID = NOMBA_CLIENT_ID
+        self.NOMBA_CLIENT_SECRET = NOMBA_CLIENT_SECRET
+        self.NOMBA_ACCOUNT_ID = NOMBA_ACCOUNT_ID
+
+    @property
+    def nomba_base_url(self) -> str:
+        return self.NOMBA_BASE_URL
+
+    @property
+    def nomba_client_id(self) -> str:
+        return self.NOMBA_CLIENT_ID
+
+    @property
+    def nomba_client_secret(self) -> str:
+        return self.NOMBA_CLIENT_SECRET
+
+    @property
+    def nomba_account_id(self) -> str:
+        return self.NOMBA_ACCOUNT_ID
+
 
 settings = Settings()
+
