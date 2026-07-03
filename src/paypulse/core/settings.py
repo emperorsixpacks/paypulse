@@ -31,47 +31,62 @@ class EnvironmentSettings(BaseSettings):
         return os.path.join(return_base_dir(), "config", filename)
 
 
-# Bootstrap environment to find the correct .env file
 _env_bootstrap = EnvironmentSettings()
 
 
-class ServerConfig(BaseSettings):
+class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=_env_bootstrap.get_env_file_path,
         env_file_encoding="utf-8",
         extra="ignore",
     )
-    environment: ENVIRONMENT = Field(
-        default=ENVIRONMENT.DEVELOPMENT,
-        alias="ENVIRONMENT",
-    )
+
+    # App
+    APP_NAME: str = "Paypulse"
+    APP_ENV: str = "development"
+    DEBUG: bool = False
+
+    # Database
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: str
+    DB_NAME: str
+    DATABASE_URL: str | None = None
+    DB_DRIVER: str = "postgresql+asyncpg"
+
+    # Redis
+    REDIS_HOST: str
+    REDIS_PORT: int = 6379
+    REDIS_URL: str | None = None
+
+    # JWT
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+
+    # Nomba
+    NOMBA_BASE_URL: str = "https://sandbox.nomba.com"
+    NOMBA_CLIENT_ID: str = ""
+    NOMBA_CLIENT_SECRET: str = ""
+    NOMBA_ACCOUNT_ID: str = ""
+
+    # Checkout
+    CHECKOUT_BASE_URL: str = "http://localhost:8000/checkout"
+
+    # Resend
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "billing@paypulse.dev"
+
+    def get_database_url(self) -> str:
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        return f"{self.DB_DRIVER}://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+
+    def get_redis_url(self) -> str:
+        if self.REDIS_URL:
+            return self.REDIS_URL
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}"
 
 
-class DatabaseConfig(ServerConfig):
-    db_user: str
-    db_password: str
-    db_host: str
-    db_port: str
-    db_name: str
-    database_uri: str | None = None
-    db_driver: str = "postgresql+asyncpg"
-
-    def get_uri(self) -> str:
-        if self.database_uri:
-            return self.database_uri
-        return f"{self.db_driver}://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
-
-
-class RedisConfig(ServerConfig):
-    redis_port: int
-    redis_host: str
-    redis_username: str | None = None
-    redis_password: str | None = None
-
-
-class NombaConfig(BaseSettings):
-    model_config = SettingsConfigDict(extra="ignore")
-    nomba_client_id: str
-    nomba_client_secret: str
-    nomba_account_id: str
-    nomba_base_url: str = "https://api.nomba.com"
+settings = Settings()
