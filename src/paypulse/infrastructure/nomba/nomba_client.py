@@ -2,6 +2,7 @@ from typing import Any
 
 from httpx import Response
 
+from src.paypulse.core.settings import NombaConfig
 from src.paypulse.infrastructure.base_client import BaseClient, T
 from src.paypulse.infrastructure.nomba.base import NombaResponse
 from src.paypulse.infrastructure.nomba.dtos import (
@@ -28,7 +29,6 @@ from src.paypulse.infrastructure.nomba.dtos import (
     WalletTransferRequest,
     WalletTransferResponse,
 )
-from src.paypulse.infrastructure.settings import NombaConfig
 from src.paypulse.types import Error, error
 
 
@@ -51,14 +51,22 @@ class NombaClient(BaseClient):
             headers["Authorization"] = self._access_token
         return headers
 
-    def _process_response(self, res: Response, response_model: type[T]) -> tuple[T | None, Error]:
+    def _process_response(
+        self, res: Response, response_model: type[T]
+    ) -> tuple[T | None, Error]:
         if res.status_code >= 500:
             return None, error(f"Service not available {res.status_code}")
 
         response_data = response_model.model_validate(res.json())
 
-        if isinstance(response_data, NombaResponse) and response_data.code not in ("00", "200", "201"):
-            return None, error(f"{response_data.description} code: {response_data.code}")
+        if isinstance(response_data, NombaResponse) and response_data.code not in (
+            "00",
+            "200",
+            "201",
+        ):
+            return None, error(
+                f"{response_data.description} code: {response_data.code}"
+            )
 
         return response_data, None
 
@@ -146,22 +154,34 @@ class NombaClient(BaseClient):
 
 
 class AccountMixin:
-    async def parent_account_balance(self: Any) -> tuple[AccountBalanceResponse | None, Error]:
+    async def parent_account_balance(
+        self: Any,
+    ) -> tuple[AccountBalanceResponse | None, Error]:
         await self._ensure_authenticated()
-        return await self._get(AccountBalanceResponse, path_suffix="/v1/accounts/balance")
+        return await self._get(
+            AccountBalanceResponse, path_suffix="/v1/accounts/balance"
+        )
 
-    async def parent_account_details(self: Any) -> tuple[AccountDetailsResponse | None, Error]:
+    async def parent_account_details(
+        self: Any,
+    ) -> tuple[AccountDetailsResponse | None, Error]:
         await self._ensure_authenticated()
-        return await self._get(AccountDetailsResponse, path_suffix="/v1/accounts/details")
+        return await self._get(
+            AccountDetailsResponse, path_suffix="/v1/accounts/details"
+        )
 
-    async def sub_account_balance(self: Any, sub_account_id: str) -> tuple[AccountBalanceResponse | None, Error]:
+    async def sub_account_balance(
+        self: Any, sub_account_id: str
+    ) -> tuple[AccountBalanceResponse | None, Error]:
         await self._ensure_authenticated()
         return await self._get(
             AccountBalanceResponse,
             path_suffix=f"/v1/accounts/{sub_account_id}/balance",
         )
 
-    async def sub_account_details(self: Any, sub_account_id: str) -> tuple[AccountDetailsResponse | None, Error]:
+    async def sub_account_details(
+        self: Any, sub_account_id: str
+    ) -> tuple[AccountDetailsResponse | None, Error]:
         await self._ensure_authenticated()
         return await self._get(
             AccountDetailsResponse,
@@ -277,7 +297,9 @@ class CheckoutMixin:
 
 
 class TransactionMixin:
-    async def fetch_transactions(self: Any, **params: Any) -> tuple[FetchTransactionsResponse | None, Error]:
+    async def fetch_transactions(
+        self: Any, **params: Any
+    ) -> tuple[FetchTransactionsResponse | None, Error]:
         await self._ensure_authenticated()
         return await self._get(
             FetchTransactionsResponse,
@@ -285,14 +307,18 @@ class TransactionMixin:
             req_params=params or None,
         )
 
-    async def fetch_transaction(self: Any, transaction_id: str) -> tuple[TransactionRequeryResponse | None, Error]:
+    async def fetch_transaction(
+        self: Any, transaction_id: str
+    ) -> tuple[TransactionRequeryResponse | None, Error]:
         await self._ensure_authenticated()
         return await self._get(
             TransactionRequeryResponse,
             path_suffix=f"/v1/transactions/{transaction_id}",
         )
 
-    async def requery_transaction(self: Any, session_id: str) -> tuple[TransactionRequeryResponse | None, Error]:
+    async def requery_transaction(
+        self: Any, session_id: str
+    ) -> tuple[TransactionRequeryResponse | None, Error]:
         await self._ensure_authenticated()
         return await self._get(
             TransactionRequeryResponse,
@@ -326,6 +352,13 @@ class TransactionManager(NombaClient, TransactionMixin):
         super().__init__(config)
 
 
-class Nomba(NombaClient, AccountMixin, TransferMixin, VirtualAccountMixin, CheckoutMixin, TransactionMixin):
+class Nomba(
+    NombaClient,
+    AccountMixin,
+    TransferMixin,
+    VirtualAccountMixin,
+    CheckoutMixin,
+    TransactionMixin,
+):
     def __init__(self, config: NombaConfig) -> None:
         super().__init__(config)
