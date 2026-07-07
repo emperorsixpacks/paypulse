@@ -1,21 +1,38 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #6C3CE1;
-  --color-primary-dark: #5428C7;
-  --color-primary-light: #8B5CF6;
-  --color-accent: #F97316;
-  --color-surface: #FAFAFA;
-  --color-surface-alt: #F3F0FF;
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --color-sidebar: #1E1B2E;
-  --color-sidebar-hover: #2A2640;
-  --color-sidebar-active: #342F52;
+  --color-paper: #FAFAF9;
+  --color-mist: #EFF0F2;
+  --color-ink: #0E1116;
+  --color-slate: #6B7280;
+  --color-cobalt: #2E4CFF;
+  --color-cobalt-dim: #1F35C7;
+  --color-lime: #D6FA5C;
+  --color-hair: rgba(14,17,22,0.10);
+
+  --color-sidebar: #0E1116;
+  --color-sidebar-hover: #1a1f28;
+  --color-sidebar-active: #232933;
+
+  --color-badge-ok-bg: #E6F7ED;
+  --color-badge-ok-text: #1a7a4c;
+  --color-badge-wait-bg: #FCF1DC;
+  --color-badge-wait-text: #8a6113;
+  --color-badge-fail-bg: #FBE9E7;
+  --color-badge-fail-text: #a3352b;
+  --color-badge-neutral-bg: #EFF0F2;
+  --color-badge-neutral-text: #6B7280;
+
+  --font-display: 'Space Grotesk', ui-sans-serif, sans-serif;
+  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-html {
-  scroll-behavior: smooth;
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
 }
 
 @keyframes fade-in {
@@ -23,6 +40,10 @@ html {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out both;
-}
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-hair); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(14,17,22,0.2); }
