@@ -2,9 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_current_merchant
-from src.paypulse.core.security import create_access_token, hash_password, verify_password
 from src.paypulse.models.merchant import Merchant
-from src.paypulse.repositories.merchant_repository import ApiKeyRepository, MerchantRepository, ProjectRepository
 from src.paypulse.schemas.auth import (
     ApiKeyInfo,
     LoginRequest,
@@ -12,56 +10,46 @@ from src.paypulse.schemas.auth import (
     RegisterResponse,
     TokenResponse,
 )
+from src.paypulse.services.merchant_service import MerchantService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    repo = MerchantRepository(db)
-    existing = await repo.get_by_email(body.email)
-    if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
-
-    merchant = await repo.create({
-        "email": body.email,
-        "business_name": body.business_name,
-        "hashed_password": hash_password(body.password),
-    })
-
-    project_repo = ProjectRepository(db)
-    project = await project_repo.create({
-        "merchant_id": merchant.id,
-        "name": f"{body.business_name} - Default",
-    })
-
-    api_key_repo = ApiKeyRepository(db)
-    live_key_record, live_key = await api_key_repo.create_for_project(project.id, "Live", is_live=True)
-    test_key_record, test_key = await api_key_repo.create_for_project(project.id, "Test", is_live=False)
-
-    token = create_access_token({"sub": str(merchant.id)})
+    service = MerchantService(db)
+    try:
+        result = await service.register(body.email, body.business_name, body.password)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     return RegisterResponse(
-        id=merchant.id,
-        email=merchant.email,
-        business_name=merchant.business_name,
-        access_token=token,
+        id=result["merchant"].id,
+        email=result["merchant"].email,
+        business_name=result["merchant"].business_name,
+        access_token=result["access_token"],
         api_keys=[
-            ApiKeyInfo(id=live_key_record.id, name="Live", key=live_key, key_prefix=live_key_record.key_prefix, is_live=True),
-            ApiKeyInfo(id=test_key_record.id, name="Test", key=test_key, key_prefix=test_key_record.key_prefix, is_live=False),
+            ApiKeyInfo(
+                id=k["record"].id,
+                name=k["record"].name,
+                key=k["key"],
+                key_prefix=k["record"].key_prefix,
+                is_live=k["is_live"],
+            )
+            for k in result["api_keys"]
         ],
-        created_at=merchant.created_at,
+        created_at=result["merchant"].created_at,
     )
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
-    repo = MerchantRepository(db)
-    merchant = await repo.get_by_email(body.email)
-    if merchant is None or not verify_password(body.password, merchant.hashed_password):
+    service = MerchantService(db)
+    try:
+        token = await service.login(body.email, body.password)
+    except ValueError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    token = create_access_token({"sub": str(merchant.id)})
     return TokenResponse(access_token=token)
 
 

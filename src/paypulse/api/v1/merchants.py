@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_current_merchant
-from src.paypulse.core.security import create_access_token, hash_password, verify_password
 from src.paypulse.models.merchant import Merchant
-from src.paypulse.repositories.merchant_repository import ApiKeyRepository, MerchantRepository, ProjectRepository
 from src.paypulse.schemas.merchant import ApiKeyCreate, ApiKeyCreatedResponse, ApiKeyResponse, ProjectCreate, ProjectResponse
+from src.paypulse.services.merchant_service import MerchantService
 
 router = APIRouter(prefix="/merchants", tags=["merchants"])
 
@@ -28,8 +27,8 @@ async def list_projects(
     merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = ProjectRepository(db)
-    projects = await repo.get_by_merchant(merchant.id)
+    service = MerchantService(db)
+    projects = await service.list_projects(merchant.id)
     return [ProjectResponse.model_validate(p) for p in projects]
 
 
@@ -39,8 +38,8 @@ async def create_project(
     merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = ProjectRepository(db)
-    project = await repo.create({"merchant_id": merchant.id, "name": body.name})
+    service = MerchantService(db)
+    project = await service.create_project(merchant.id, body.name)
     return project
 
 
@@ -49,23 +48,18 @@ async def list_api_keys(
     merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    project_repo = ProjectRepository(db)
-    projects = await project_repo.get_by_merchant(merchant.id)
-
-    api_key_repo = ApiKeyRepository(db)
-    keys = []
-    for project in projects:
-        project_with_keys = await project_repo.get_with_api_key(project.id)
-        if project_with_keys and project_with_keys.api_key:
-            k = project_with_keys.api_key
-            keys.append(ApiKeyResponse(
-                id=k.id,
-                name=k.name,
-                key_prefix=k.key_prefix,
-                is_active=k.is_active,
-                created_at=k.created_at,
-            ))
-    return keys
+    service = MerchantService(db)
+    keys = await service.list_api_keys(merchant.id)
+    return [
+        ApiKeyResponse(
+            id=k.id,
+            name=k.name,
+            key_prefix=k.key_prefix,
+            is_active=k.is_active,
+            created_at=k.created_at,
+        )
+        for k in keys
+    ]
 
 
 @router.post("/api-keys", response_model=ApiKeyCreatedResponse, status_code=status.HTTP_201_CREATED)
@@ -74,14 +68,12 @@ async def create_api_key(
     merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    project_repo = ProjectRepository(db)
-    projects = await project_repo.get_by_merchant(merchant.id)
+    service = MerchantService(db)
+    projects = await service.list_projects(merchant.id)
     if not projects:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Create a project first")
 
-    project = projects[0]
-    api_key_repo = ApiKeyRepository(db)
-    key_record, full_key = await api_key_repo.create_for_project(project.id, body.name, body.is_live)
+    key_record, full_key = await service.generate_api_key(projects[0].id, body.name, body.is_live)
 
     return ApiKeyCreatedResponse(
         id=key_record.id,
@@ -99,7 +91,7 @@ async def revoke_api_key(
     merchant: Merchant = Depends(get_current_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = ApiKeyRepository(db)
-    revoked = await repo.revoke(key_id)
+    service = MerchantService(db)
+    revoked = await service.revoke_api_key(key_id)
     if not revoked:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")

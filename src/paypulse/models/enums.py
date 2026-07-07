@@ -41,3 +41,8 @@ class CheckoutStatus(str, Enum):
     COMPLETED = "COMPLETED"
     EXPIRED = "EXPIRED"
     CANCELLED = "CANCELLED"
+
+
+class BillingType(str, Enum):
+    FIXED = "FIXED"
+    METERED = "METERED"

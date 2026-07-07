@@ -1,10 +1,17 @@
 from src.paypulse.models.base import Base, BaseModel
-from src.paypulse.models.billing import BillingAttempt, Invoice, Plan, Subscription
+from src.paypulse.models.billing import (
+    BillingAttempt,
+    Invoice,
+    Plan,
+    Subscription,
+    UsageRecord,
+)
 from src.paypulse.models.checkout import CheckoutSession
 from src.paypulse.models.customer import Customer
 from src.paypulse.models.enums import (
     BillingAttemptStatus,
     BillingInterval,
+    BillingType,
     CheckoutStatus,
     InvoiceStatus,
     SubscriptionStatus,
@@ -20,6 +27,7 @@ __all__ = [
     "BillingAttempt",
     "BillingAttemptStatus",
     "BillingInterval",
+    "BillingType",
     "CheckoutSession",
     "CheckoutStatus",
     "Customer",
@@ -30,6 +38,7 @@ __all__ = [
     "Project",
     "Subscription",
     "SubscriptionStatus",
+    "UsageRecord",
     "WebhookDelivery",
     "WebhookDeliveryStatus",
     "WebhookEndpoint",

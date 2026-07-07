@@ -1,12 +1,10 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_project_with_merchant
 from src.paypulse.models.merchant import Project
-from src.paypulse.repositories.webhook_repository import WebhookRepository
 from src.paypulse.schemas.webhook import WebhookCreate, WebhookResponse
+from src.paypulse.services.webhook_service import WebhookService
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -16,8 +14,8 @@ async def list_webhooks(
     project: Project = Depends(get_project_with_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = WebhookRepository(db)
-    endpoints = await repo.get_active_endpoints(project.id)
+    service = WebhookService(db)
+    endpoints = await service.list_endpoints(project.id)
     return endpoints
 
 
@@ -27,8 +25,8 @@ async def create_webhook(
     project: Project = Depends(get_project_with_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = WebhookRepository(db)
-    endpoint = await repo.create_endpoint(project.id, body.url, body.events)
+    service = WebhookService(db)
+    endpoint = await service.register_endpoint(project.id, body.url, body.events)
     return endpoint
 
 
@@ -38,9 +36,8 @@ async def delete_webhook(
     project: Project = Depends(get_project_with_merchant),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = WebhookRepository(db)
-    endpoint = await repo.get(UUID(webhook_id))
-    if endpoint is None or endpoint.project_id != project.id:
+    from uuid import UUID
+    service = WebhookService(db)
+    deleted = await service.delete_endpoint(UUID(webhook_id), project.id)
+    if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
-    endpoint.is_active = False
-    await db.flush()

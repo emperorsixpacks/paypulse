@@ -21,6 +21,8 @@ class CheckoutSession(BaseModel, Base):
     status: Mapped[CheckoutStatus] = mapped_column(nullable=False, default=CheckoutStatus.PENDING)
     success_url: Mapped[str] = mapped_column(String(2048), nullable=False)
     cancel_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    nomba_order_reference: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    nomba_checkout_link: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     subscription_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("subscriptions.id"), nullable=True)

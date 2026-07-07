@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_project_from_api_key
 from src.paypulse.models.merchant import Project
-from src.paypulse.repositories.plan_repository import PlanRepository
 from src.paypulse.schemas.plan import PlanCreate, PlanResponse, PlanUpdate
+from src.paypulse.services.plan_service import PlanService
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -16,8 +16,8 @@ async def list_plans(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = PlanRepository(db)
-    plans = await repo.get_by_project(project.id)
+    service = PlanService(db)
+    plans = await service.list(project.id)
     return plans
 
 
@@ -27,16 +27,11 @@ async def create_plan(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = PlanRepository(db)
-    plan = await repo.create({
-        "project_id": project.id,
-        "name": body.name,
-        "amount": body.amount,
-        "currency": body.currency,
-        "interval": body.interval,
-        "interval_count": body.interval_count,
-        "trial_period_days": body.trial_period_days,
-    })
+    service = PlanService(db)
+    try:
+        plan = await service.create(project.id, body.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     return plan
 
 
@@ -46,9 +41,9 @@ async def get_plan(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = PlanRepository(db)
-    plan = await repo.get(UUID(plan_id))
-    if plan is None or plan.project_id != project.id:
+    service = PlanService(db)
+    plan = await service.get(UUID(plan_id), project.id)
+    if plan is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
     return plan
 
@@ -60,14 +55,12 @@ async def update_plan(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = PlanRepository(db)
-    plan = await repo.get(UUID(plan_id))
-    if plan is None or plan.project_id != project.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-
+    service = PlanService(db)
     updates = body.model_dump(exclude_unset=True)
-    updated = await repo.update(plan.id, updates)
-    return updated
+    plan = await service.update(UUID(plan_id), project.id, updates)
+    if plan is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    return plan
 
 
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -76,8 +69,7 @@ async def delete_plan(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = PlanRepository(db)
-    plan = await repo.get(UUID(plan_id))
-    if plan is None or plan.project_id != project.id:
+    service = PlanService(db)
+    deleted = await service.deactivate(UUID(plan_id), project.id)
+    if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
-    await repo.delete(plan.id)

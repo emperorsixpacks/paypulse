@@ -23,8 +23,9 @@ async def list_customers(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = CustomerRepository(db)
-    customers = await repo.get_by_project(project.id)
+    from src.paypulse.services.customer_service import CustomerService
+    service = CustomerService(db)
+    customers = await service.list(project.id)
     return customers
 
 
@@ -34,14 +35,22 @@ async def get_customer(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = CustomerRepository(db)
-    customer = await repo.get(UUID(customer_id))
-    if customer is None or customer.project_id != project.id:
+    from src.paypulse.services.customer_service import CustomerService
+    from src.paypulse.services.subscription_service import SubscriptionService
+    from src.paypulse.services.invoice_service import InvoiceService
+
+    customer_service = CustomerService(db)
+    customer = await customer_service.get(UUID(customer_id), project.id)
+    if customer is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
 
+    sub_service = SubscriptionService(db)
+    from src.paypulse.repositories.subscription_repository import SubscriptionRepository
     sub_repo = SubscriptionRepository(db)
     subscriptions = await sub_repo.get_by_customer(customer.id)
 
+    invoice_service = InvoiceService(db)
+    from src.paypulse.repositories.invoice_repository import InvoiceRepository
     invoice_repo = InvoiceRepository(db)
     invoices = await invoice_repo.get_by_customer(customer.id)
 
@@ -52,7 +61,7 @@ async def get_customer(
                 id=s.id,
                 plan_name=s.plan.name if s.plan else "Unknown",
                 status=s.status.value,
-                amount=float(s.plan.amount) if s.plan else 0,
+                amount=float(s.plan.amount) if s.plan and s.plan.amount else 0,
                 currency=s.plan.currency if s.plan else "NGN",
                 interval=s.plan.interval.value if s.plan else "MONTHLY",
                 current_period_start=s.current_period_start,

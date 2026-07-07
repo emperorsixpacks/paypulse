@@ -1,13 +1,13 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_project_from_api_key
 from src.paypulse.models.merchant import Project
-from src.paypulse.models.enums import CheckoutStatus
-from src.paypulse.repositories.checkout_repository import CheckoutRepository
-from src.paypulse.repositories.plan_repository import PlanRepository
 from src.paypulse.schemas.checkout import CheckoutSessionCreate, CheckoutSessionResponse
 from src.paypulse.core.settings import settings
+from src.paypulse.services.checkout_service import CheckoutService
 
 router = APIRouter(prefix="/checkout", tags=["checkout"])
 
@@ -18,32 +18,24 @@ async def create_checkout_session(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    plan_repo = PlanRepository(db)
-    plan = await plan_repo.get(body.plan_id)
-    if plan is None or plan.project_id != project.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found")
+    service = CheckoutService(db)
+    result = await service.create_session(
+        project_id=project.id,
+        plan_id=body.plan_id,
+        customer_email=body.customer_email,
+        customer_name=body.customer_name,
+        success_url=body.success_url,
+        cancel_url=body.cancel_url,
+        metadata=body.metadata,
+    )
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Plan not found or inactive")
 
-    checkout_repo = CheckoutRepository(db)
-    code = CheckoutSession.generate_code()
-
-    session_data = {
-        "project_id": project.id,
-        "plan_id": body.plan_id,
-        "code": code,
-        "customer_email": body.customer_email,
-        "customer_name": body.customer_name,
-        "success_url": body.success_url,
-        "cancel_url": body.cancel_url,
-        "expires_at": CheckoutSession.default_expiry(),
-        "extra_data": body.metadata,
-    }
-
-    session = await checkout_repo.create(session_data)
-
+    session = result["session"]
     return CheckoutSessionResponse(
         id=session.id,
         code=session.code,
-        checkout_url=f"{settings.CHECKOUT_BASE_URL}/{session.code}",
+        checkout_url=result["checkout_url"],
         status=session.status,
         expires_at=session.expires_at,
         plan_id=session.plan_id,
@@ -56,13 +48,13 @@ async def list_checkout_sessions(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = CheckoutRepository(db)
-    sessions = await repo.get_by_project(project.id)
+    service = CheckoutService(db)
+    sessions = await service.list(project.id)
     return [
         CheckoutSessionResponse(
             id=s.id,
             code=s.code,
-            checkout_url=f"{settings.CHECKOUT_BASE_URL}/{s.code}",
+            checkout_url=s.nomba_checkout_link or f"{settings.CHECKOUT_BASE_URL}/{s.code}",
             status=s.status,
             expires_at=s.expires_at,
             plan_id=s.plan_id,
@@ -78,15 +70,15 @@ async def get_checkout_session(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = CheckoutRepository(db)
-    session = await repo.get_by_code(code)
-    if session is None or session.project_id != project.id:
+    service = CheckoutService(db)
+    session = await service.get_by_code(code, project.id)
+    if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     return CheckoutSessionResponse(
         id=session.id,
         code=session.code,
-        checkout_url=f"{settings.CHECKOUT_BASE_URL}/{session.code}",
+        checkout_url=session.nomba_checkout_link or f"{settings.CHECKOUT_BASE_URL}/{session.code}",
         status=session.status,
         expires_at=session.expires_at,
         plan_id=session.plan_id,
@@ -100,12 +92,7 @@ async def cancel_checkout_session(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = CheckoutRepository(db)
-    session = await repo.get_by_code(code)
-    if session is None or session.project_id != project.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
-    if session.status != CheckoutStatus.PENDING:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Session is not pending")
-
-    session.status = CheckoutStatus.CANCELLED
-    await db.flush()
+    service = CheckoutService(db)
+    cancelled = await service.cancel(code, project.id)
+    if cancelled is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found or not pending")

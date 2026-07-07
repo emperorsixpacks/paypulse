@@ -17,9 +17,10 @@ class Customer(BaseModel, Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     nomba_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    nomba_token_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
     card_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
-    subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="customer")
+    subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="customer")  # noqa: F821
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="customer")  # noqa: F821
     project: Mapped["Project"] = relationship(back_populates="customers")  # noqa: F821
