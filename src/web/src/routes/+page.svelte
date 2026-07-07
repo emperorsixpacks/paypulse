@@ -1,272 +1,294 @@
 <script lang="ts">
-	let scrolled = $state(false);
+	import { onMount } from 'svelte';
 
-	function handleScroll() {
-		scrolled = window.scrollY > 20;
+	let reduced = $state(false);
+	let liveNum = $state(128412);
+
+	const feed = [
+		{ s:'ok',   amt:'$24.00',  who:'Acme Ltd',        state:'charged' },
+		{ s:'wait', amt:'$18.50',  who:'Nova Systems',    state:'retrying' },
+		{ s:'ok',   amt:'$340.00', who:'Quantum Labs',    state:'charged' },
+		{ s:'ok',   amt:'$9.00',   who:'Fenwick Studio',  state:'charged' },
+		{ s:'fail', amt:'$65.00',  who:'Drift Analytics', state:'failed' },
+		{ s:'ok',   amt:'$65.00',  who:'Drift Analytics', state:'recovered' },
+		{ s:'ok',   amt:'$212.00', who:'Baseline Co',     state:'charged' },
+	];
+
+	const iconFor: Record<string, string> = { ok:'✓', wait:'↻', fail:'!' };
+
+	onMount(() => {
+		reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		// Scroll reveal
+		const revealEls = document.querySelectorAll('.reveal');
+		if ('IntersectionObserver' in window && !reduced) {
+			const io = new IntersectionObserver((entries) => {
+				entries.forEach(e => {
+					if ((e as IntersectionObserverEntry).isIntersecting) {
+						(e.target as HTMLElement).classList.add('in');
+						io.unobserve(e.target);
+					}
+				});
+			}, { threshold: 0.15 });
+			revealEls.forEach(el => io.observe(el));
+		} else {
+			revealEls.forEach(el => el.classList.add('in'));
+		}
+
+		// Count-up stats
+		const statEls = document.querySelectorAll('.stat .num');
+		if ('IntersectionObserver' in window && !reduced) {
+			const statIo = new IntersectionObserver((entries) => {
+				entries.forEach(e => {
+					if ((e as IntersectionObserverEntry).isIntersecting) {
+						animateCount(e.target as HTMLElement);
+						statIo.unobserve(e.target);
+					}
+				});
+			}, { threshold: 0.4 });
+			statEls.forEach(el => statIo.observe(el));
+		} else {
+			statEls.forEach(el => animateCount(el as HTMLElement));
+		}
+
+		// Live counter
+		if (!reduced) {
+			const iv = setInterval(() => {
+				liveNum += Math.floor(Math.random() * 47) + 3;
+			}, 3400);
+			return () => clearInterval(iv);
+		}
+	});
+
+	function animateCount(el: HTMLElement) {
+		const target = parseFloat(el.dataset.count || '0');
+		const suffix = el.dataset.suffix || '';
+		const prefix = el.dataset.prefix || '';
+		if (reduced || isNaN(target)) {
+			el.textContent = prefix + (el.dataset.count || '0') + suffix;
+			return;
+		}
+		const duration = 1100;
+		const start = performance.now();
+		const decimals = ((el.dataset.count || '').split('.')[1] || '').length;
+		function tick(now: number) {
+			const p = Math.min(1, (now - start) / duration);
+			const eased = 1 - Math.pow(1 - p, 3);
+			const val = (target * eased).toFixed(decimals);
+			el.textContent = prefix + val + suffix;
+			if (p < 1) requestAnimationFrame(tick);
+		}
+		requestAnimationFrame(tick);
 	}
 
-	const features = [
-		{
-			icon: '⚡',
-			title: 'Automated Billing',
-			description: 'Recurring invoices, proration, and dunning handled automatically. Never miss a payment again.'
-		},
-		{
-			icon: '📊',
-			title: 'Usage-Based Pricing',
-			description: 'Metered billing with real-time usage tracking. Charge per API call, per seat, or per unit.'
-		},
-		{
-			icon: '🔒',
-			title: 'Secure Payments',
-			description: 'PCI-compliant checkout with Nomba integration. Tokenized cards and encrypted transactions.'
-		},
-		{
-			icon: '🔄',
-			title: 'Smart Dunning',
-			description: 'Automated retry schedules that recover failed payments. Exponential backoff with merchant controls.'
-		},
-		{
-			icon: '🔔',
-			title: 'Webhook Events',
-			description: 'Real-time event delivery with HMAC signatures. Track every subscription lifecycle event.'
-		},
-		{
-			icon: '💰',
-			title: 'Revenue Recovery',
-			description: 'Cancellation policies with smart refunds. Reduce churn with configurable retention tools.'
-		}
-	];
+	function renderLine(item: typeof feed[0]) {
+		const cls = item.s === 'ok' ? 'tk-ok' : item.s === 'wait' ? 'tk-wait' : 'tk-fail';
+		return { cls, icon: iconFor[item.s], ...item };
+	}
 
-	const logos = [
-		'TechCorp', 'DataFlow', 'CloudSync', 'NexaPay', 'QuantumAI', 'VertexLabs'
-	];
+	let tickerLines = $derived(feed.slice(0, 4).map(renderLine));
 </script>
 
-<svelte:window onscroll={handleScroll} />
+<svelte:head>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+</svelte:head>
 
-<div class="min-h-screen bg-white">
-	<!-- Navbar -->
-	<header class="fixed top-0 left-0 right-0 z-50 transition-all duration-300 {scrolled ? 'nav-scrolled' : ''}">
-		<nav class="mx-auto max-w-7xl px-6 lg:px-8">
-			<div class="flex h-18 items-center justify-between">
-				<div class="flex items-center gap-2">
-					<div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-						<svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-						</svg>
-					</div>
-					<span class="text-xl font-bold text-gray-900">PayPulse</span>
-				</div>
+<!-- NAV -->
+<nav class="nav">
+	<div class="wrap">
+		<a class="brand" href="#top">
+			<span class="pulse-dot" aria-hidden="true"></span>
+			PayPulse
+		</a>
+		<div class="navlinks">
+			<a href="#features">Features</a>
+			<a href="#pricing">Pricing</a>
+			<a href="#docs">Docs</a>
+			<a href="#contact">Contact</a>
+		</div>
+		<div class="navcta">
+			<a class="login" href="/login">Log in</a>
+			<a class="btn btn-cobalt btn-sm" href="/register">Start free trial</a>
+		</div>
+	</div>
+</nav>
 
-				<div class="hidden md:flex items-center gap-8">
-					<a href="#features" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Features</a>
-					<a href="#pricing" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Pricing</a>
-					<a href="#docs" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Docs</a>
-					<a href="#contact" class="text-sm font-medium text-gray-600 hover:text-primary transition-colors">Contact</a>
-				</div>
-
-				<div class="flex items-center gap-3">
-					<a href="/login" class="text-sm font-medium text-gray-700 hover:text-primary transition-colors px-4 py-2">Log In</a>
-					<a href="/register" class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark transition-all hover:shadow-lg hover:shadow-primary/20">Get Started</a>
-				</div>
+<!-- HERO -->
+<header class="hero" id="top">
+	<div class="blob blob-a" aria-hidden="true"></div>
+	<div class="blob blob-b" aria-hidden="true"></div>
+	<div class="wrap hero-grid">
+		<div>
+			<p class="eyebrow"><span class="dot" aria-hidden="true"></span>Now in early access</p>
+			<h1 class="headline">Billing that keeps<br>up with <span class="accent">you.</span></h1>
+			<p class="sub">Automated invoicing, smart dunning, usage-based pricing and secure payouts — the full revenue stack behind subscriptions that just work.</p>
+			<div class="cta-row">
+				<a class="btn btn-primary" href="/register">Start free trial</a>
+				<a class="btn btn-ghost" href="#docs">Read the docs →</a>
 			</div>
-		</nav>
-	</header>
-
-	<!-- Hero -->
-	<section class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 hero-gradient overflow-hidden">
-		<!-- Decorative blobs -->
-		<div class="absolute top-20 left-10 h-72 w-72 rounded-full bg-primary/5 blur-3xl animate-float"></div>
-		<div class="absolute bottom-10 right-10 h-96 w-96 rounded-full bg-primary-light/5 blur-3xl animate-float-delay"></div>
-
-		<div class="mx-auto max-w-7xl px-6 lg:px-8 relative">
-			<div class="text-center max-w-4xl mx-auto">
-				<!-- Badge -->
-				<div class="animate-fade-up inline-flex items-center gap-2 rounded-full border border-primary/20 bg-surface-alt px-4 py-1.5 mb-8">
-					<span class="h-2 w-2 rounded-full bg-primary animate-pulse-glow"></span>
-					<span class="text-sm font-medium text-primary">Now in Early Access</span>
-				</div>
-
-				<!-- Headline -->
-				<h1 class="animate-fade-up-delay-1 text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
-					All Your
-					<span class="gradient-text"> Subscription Billing</span>
-					<br />In One Platform
-				</h1>
-
-				<!-- Subtitle -->
-				<p class="animate-fade-up-delay-2 mt-6 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-					Streamline revenue operations with automated billing, smart dunning,
-					usage tracking, and flexible cancellation policies — all in one powerful API.
-				</p>
-
-				<!-- CTAs -->
-				<div class="animate-fade-up-delay-3 mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-					<a href="/register" class="rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-white hover:bg-primary-dark transition-all hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5">
-						Start Free Trial
-					</a>
-					<a href="#docs" class="rounded-full border border-gray-300 bg-white px-8 py-3.5 text-base font-semibold text-gray-700 hover:border-primary/30 hover:text-primary transition-all">
-						Read the Docs →
-					</a>
-				</div>
-
-				<!-- Social proof -->
-				<p class="animate-fade-in mt-8 text-sm text-gray-400">No credit card required · Free for up to 50 customers</p>
+			<p class="fine">No card required · Free for your first 50 customers</p>
+			<div class="live-stat">
+				<span class="pulse-dot" aria-hidden="true"></span>
+				<span>Processed today: <span class="num">${liveNum.toLocaleString('en-US')}</span></span>
 			</div>
 		</div>
-	</section>
 
-	<!-- Logos -->
-	<section class="py-12 border-y border-gray-100">
-		<div class="mx-auto max-w-7xl px-6 lg:px-8">
-			<p class="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 mb-8">Trusted by innovative companies</p>
-			<div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-				{#each logos as name}
-					<span class="text-lg font-bold text-gray-300 select-none">{name}</span>
-				{/each}
+		<div class="card-stage">
+			<div class="invoice-card behind" aria-hidden="true">
+				<div class="invoice-top"><span>INVOICE · #0093</span><span class="badge-paid">PAID</span></div>
+				<p class="invoice-amt">$89.00</p>
+				<p class="invoice-who">Fenwick Studio</p>
 			</div>
-		</div>
-	</section>
-
-	<!-- Features -->
-	<section id="features" class="py-20 lg:py-28">
-		<div class="mx-auto max-w-7xl px-6 lg:px-8">
-			<div class="text-center max-w-2xl mx-auto mb-16">
-				<h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-					Everything You Need to
-					<span class="gradient-text"> Scale Revenue</span>
-				</h2>
-				<p class="mt-4 text-lg text-gray-500">
-					From subscription creation to cancellation — every tool you need to manage the full customer lifecycle.
-				</p>
-			</div>
-
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{#each features as feature, i}
-					<div class="card-hover group rounded-2xl border border-gray-100 bg-white p-8 hover:border-primary/20">
-						<div class="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-alt text-2xl mb-5 group-hover:scale-110 transition-transform">
-							{feature.icon}
-						</div>
-						<h3 class="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-						<p class="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</section>
-
-	<!-- Stats Banner -->
-	<section class="py-16 bg-surface-alt">
-		<div class="mx-auto max-w-7xl px-6 lg:px-8">
-			<div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-				<div>
-					<div class="text-3xl sm:text-4xl font-extrabold text-primary">99.9%</div>
-					<div class="mt-1 text-sm text-gray-500">Uptime SLA</div>
+			<div class="invoice-card">
+				<div class="invoice-top">
+					<span>INVOICE · #0094</span>
+					<span class="badge-paid">PAID</span>
 				</div>
-				<div>
-					<div class="text-3xl sm:text-4xl font-extrabold text-primary">50ms</div>
-					<div class="mt-1 text-sm text-gray-500">Avg Response</div>
-				</div>
-				<div>
-					<div class="text-3xl sm:text-4xl font-extrabold text-primary">25+</div>
-					<div class="mt-1 text-sm text-gray-500">API Endpoints</div>
-				</div>
-				<div>
-					<div class="text-3xl sm:text-4xl font-extrabold text-primary">$0</div>
-					<div class="mt-1 text-sm text-gray-500">Setup Fees</div>
+				<p class="invoice-amt">$340.00</p>
+				<p class="invoice-who">Quantum Labs</p>
+				<div class="invoice-meta">
+					<div><span>Plan</span><b>Growth · Monthly</b></div>
+					<div><span>Method</span><b>•••• 4471</b></div>
+					<div><span>Next charge</span><b>Aug 7, 2026</b></div>
 				</div>
 			</div>
 		</div>
-	</section>
+	</div>
+</header>
 
-	<!-- CTA -->
-	<section class="py-20 lg:py-28">
-		<div class="mx-auto max-w-7xl px-6 lg:px-8">
-			<div class="relative rounded-3xl bg-primary overflow-hidden p-12 lg:p-16 text-center">
-				<div class="absolute top-0 right-0 h-64 w-64 rounded-full bg-white/10 blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-				<div class="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-white/5 blur-2xl translate-y-1/2 -translate-x-1/2"></div>
+<!-- BUILT FOR -->
+<section class="builtfor">
+	<div class="wrap">
+		<span class="builtfor-label">Built for</span>
+		<div class="category-list">
+			<span>SaaS platforms</span>
+			<span>Marketplaces</span>
+			<span>API-first products</span>
+			<span>Creator tools</span>
+			<span>Fintech apps</span>
+		</div>
+	</div>
+</section>
 
-				<div class="relative">
-					<h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-						Ready to Transform Your Billing?
-					</h2>
-					<p class="mt-4 text-lg text-white/80 max-w-xl mx-auto">
-						Join hundreds of businesses automating their subscription revenue. Start free, scale as you grow.
-					</p>
-					<div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-						<a href="/register" class="rounded-full bg-white px-8 py-3.5 text-base font-semibold text-primary hover:bg-white/90 transition-all hover:shadow-xl hover:-translate-y-0.5">
-							Create Free Account
-						</a>
-						<a href="#contact" class="rounded-full border border-white/30 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/10 transition-all">
-							Talk to Sales
-						</a>
-					</div>
-				</div>
+<!-- FEATURES -->
+<section class="features" id="features">
+	<div class="wrap">
+		<div class="section-head reveal">
+			<h2 class="section-title">Everything you need to scale revenue.</h2>
+			<p class="section-desc">From the first invoice to the last cancellation — every tool you need to manage the full customer lifecycle.</p>
+		</div>
+
+		<div class="feature-grid reveal">
+			<div class="feature-card">
+				<div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg></div>
+				<h3>Automated billing</h3>
+				<p>Recurring invoices, proration and dunning handled without a script.</p>
+				<p class="feature-spec">&lt; 50ms per charge</p>
+			</div>
+			<div class="feature-card">
+				<div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg></div>
+				<h3>Usage-based pricing</h3>
+				<p>Meter API calls, seats or units, and bill exactly what's used.</p>
+				<p class="feature-spec">Billed per-unit</p>
+			</div>
+			<div class="feature-card">
+				<div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+				<h3>Secure payments</h3>
+				<p>PCI-compliant checkout with Nomba. Cards tokenized end to end.</p>
+				<p class="feature-spec">PCI DSS</p>
+			</div>
+			<div class="feature-card">
+				<div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M21 3v5h-5M3 21v-5h5"/></svg></div>
+				<h3>Smart dunning</h3>
+				<p>Failed payments retry on an exponential schedule you control.</p>
+				<p class="feature-spec">Auto-retry</p>
+			</div>
+			<div class="feature-card">
+				<div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></div>
+				<h3>Webhook events</h3>
+				<p>Every lifecycle event delivered in real time, signed with HMAC.</p>
+				<p class="feature-spec">HMAC signed</p>
+			</div>
+			<div class="feature-card">
+				<div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0E1116" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 15s1 1.5 2.5 1.5 2.5-1 2.5-2-1-1.5-2.5-2-2.5-1-2.5-2 1-2 2.5-2 2.5 1.5 2.5 1.5"/></svg></div>
+				<h3>Revenue recovery</h3>
+				<p>Cancellation flows with configurable win-back offers.</p>
+				<p class="feature-spec">Configurable</p>
 			</div>
 		</div>
-	</section>
+	</div>
+</section>
 
-	<!-- Footer -->
-	<footer class="border-t border-gray-100 py-12">
-		<div class="mx-auto max-w-7xl px-6 lg:px-8">
-			<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-				<div>
-					<div class="flex items-center gap-2 mb-4">
-						<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-							<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-							</svg>
-						</div>
-						<span class="text-lg font-bold text-gray-900">PayPulse</span>
-					</div>
-					<p class="text-sm text-gray-500 leading-relaxed">Subscription billing and revenue operations for modern businesses.</p>
-				</div>
+<!-- STATS -->
+<section class="stats" id="pricing">
+	<div class="wrap">
+		<div class="stats-row reveal">
+			<div class="stat"><div class="num" data-count="99.9" data-suffix="%">0%</div><div class="label">Uptime</div></div>
+			<div class="stat"><div class="num" data-count="50" data-suffix="ms">0ms</div><div class="label">Response time</div></div>
+			<div class="stat"><div class="num" data-count="25" data-suffix="+">0+</div><div class="label">Integrations</div></div>
+			<div class="stat"><div class="num" data-count="0" data-prefix="$">$0</div><div class="label">Cost to start</div></div>
+		</div>
+	</div>
+</section>
 
-				<div>
-					<h4 class="text-sm font-semibold text-gray-900 mb-4">Product</h4>
-					<ul class="space-y-2.5">
-						<li><a href="#features" class="text-sm text-gray-500 hover:text-primary transition-colors">Features</a></li>
-						<li><a href="#pricing" class="text-sm text-gray-500 hover:text-primary transition-colors">Pricing</a></li>
-						<li><a href="#docs" class="text-sm text-gray-500 hover:text-primary transition-colors">API Docs</a></li>
-						<li><a href="/status" class="text-sm text-gray-500 hover:text-primary transition-colors">Status</a></li>
-					</ul>
-				</div>
-
-				<div>
-					<h4 class="text-sm font-semibold text-gray-900 mb-4">Company</h4>
-					<ul class="space-y-2.5">
-						<li><a href="#about" class="text-sm text-gray-500 hover:text-primary transition-colors">About</a></li>
-						<li><a href="#contact" class="text-sm text-gray-500 hover:text-primary transition-colors">Contact</a></li>
-						<li><a href="#careers" class="text-sm text-gray-500 hover:text-primary transition-colors">Careers</a></li>
-						<li><a href="#blog" class="text-sm text-gray-500 hover:text-primary transition-colors">Blog</a></li>
-					</ul>
-				</div>
-
-				<div>
-					<h4 class="text-sm font-semibold text-gray-900 mb-4">Legal</h4>
-					<ul class="space-y-2.5">
-						<li><a href="#privacy" class="text-sm text-gray-500 hover:text-primary transition-colors">Privacy</a></li>
-						<li><a href="#terms" class="text-sm text-gray-500 hover:text-primary transition-colors">Terms</a></li>
-						<li><a href="#security" class="text-sm text-gray-500 hover:text-primary transition-colors">Security</a></li>
-					</ul>
-				</div>
-			</div>
-
-			<div class="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-				<p class="text-sm text-gray-400">&copy; {new Date().getFullYear()} PayPulse. All rights reserved.</p>
-				<div class="flex items-center gap-5">
-					<a href="https://twitter.com/paypulse" class="text-gray-400 hover:text-primary transition-colors" aria-label="Twitter">
-						<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-					</a>
-					<a href="https://github.com/paypulse" class="text-gray-400 hover:text-primary transition-colors" aria-label="GitHub">
-						<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-					</a>
-					<a href="https://linkedin.com/company/paypulse" class="text-gray-400 hover:text-primary transition-colors" aria-label="LinkedIn">
-						<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-					</a>
-				</div>
+<!-- CTA BAND -->
+<section class="wrap">
+	<div class="cta-band reveal">
+		<div class="blob blob-a" aria-hidden="true"></div>
+		<div class="blob blob-b" aria-hidden="true"></div>
+		<div class="cta-inner">
+			<p class="eyebrow"><span class="dot" aria-hidden="true"></span>Ready when you are</p>
+			<h2>Get paid on time. Every time.</h2>
+			<p>Start free, connect your first product in an afternoon, and scale into usage billing whenever you're ready.</p>
+			<div class="cta-row">
+				<a class="btn btn-on-cobalt" href="/register">Create free account</a>
+				<a class="btn btn-ghost-on-cobalt" href="#contact">Talk to sales</a>
 			</div>
 		</div>
-	</footer>
-</div>
+	</div>
+</section>
+
+<!-- FOOTER -->
+<footer id="docs">
+	<div class="wrap">
+		<div class="foot-grid">
+			<div class="foot-brand">
+				<a class="brand" href="#top">
+					<span class="pulse-dot" aria-hidden="true"></span>
+					PayPulse
+				</a>
+				<p>Subscription billing and revenue operations for teams that get paid on a schedule.</p>
+			</div>
+			<div class="foot-col">
+				<h4>Product</h4>
+				<a href="#features">Features</a>
+				<a href="#pricing">Pricing</a>
+				<a href="#docs">API docs</a>
+				<a href="#">Status</a>
+			</div>
+			<div class="foot-col">
+				<h4>Company</h4>
+				<a href="#">About</a>
+				<a href="#contact">Contact</a>
+				<a href="#">Careers</a>
+				<a href="#">Blog</a>
+			</div>
+			<div class="foot-col">
+				<h4>Legal</h4>
+				<a href="#">Privacy</a>
+				<a href="#">Terms</a>
+				<a href="#">Security</a>
+			</div>
+		</div>
+		<div class="foot-bottom">
+			<span>&copy; 2026 PayPulse Inc. All rights reserved.</span>
+			<div class="socials">
+				<a href="#" aria-label="X (Twitter)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.6 8.7L23.4 22H16.8l-5.2-6.8L5.6 22H2.5l8.1-9.3L1.6 2h6.8l4.7 6.2L18.9 2Zm-1.2 18h1.7L7.4 3.9H5.6l12.1 16.1Z"/></svg></a>
+				<a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.3-3.4-1.3-.5-1.1-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.6-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9 9 0 0 1 4.9 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.6.6.6 1 1.5 1 2.6 0 3.8-2.4 4.6-4.6 4.9.4.3.7.9.7 1.9v2.7c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg></a>
+				<a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.9 8.4H3.6V20H6.9V8.4ZM5.3 3.4a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8ZM20.4 20h-3.3v-6.1c0-1.5-.5-2.5-1.8-2.5-1 0-1.6.7-1.9 1.3-.1.2-.1.6-.1.9V20H10c0-11.6 0-11.6 0-11.6h3.3v1.7c.4-.7 1.2-1.6 3-1.6 2.2 0 3.9 1.4 3.9 4.5V20Z"/></svg></a>
+			</div>
+		</div>
+	</div>
+</footer>
