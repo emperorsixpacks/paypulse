@@ -1,31 +1,77 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { api, clearToken, clearApiKey } from '$lib/api';
+	import { goto } from '$app/navigation';
+
+	let merchant = $state<any>(null);
+	let loading = $state(true);
+
+	onMount(async () => {
+		try {
+			merchant = await api.getMe();
+		} catch {
+			goto('/login');
+		} finally {
+			loading = false;
+		}
+	});
+
+	function logout() {
+		clearToken();
+		clearApiKey();
+		goto('/login');
+	}
+</script>
+
 <svelte:head><title>Settings — PayPulse</title></svelte:head>
 
-<div class="mb-6">
-	<h1 class="text-xl font-bold text-gray-900">Settings</h1>
-</div>
+<div class="max-w-2xl">
+	<h2 class="text-[20px] font-bold text-ink font-[family-name:var(--font-display)] mb-6">Settings</h2>
 
-<div class="space-y-6">
-	<div class="bg-white rounded-xl border border-gray-100 p-6">
-		<h2 class="text-base font-semibold text-gray-900 mb-4">API Keys</h2>
-		<p class="text-sm text-gray-500 mb-4">Manage your API keys for programmatic access.</p>
-		<button class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary/30 hover:text-primary transition-colors">
-			Manage API Keys →
-		</button>
-	</div>
+	{#if loading}
+		<p class="text-[13px] text-slate py-8 text-center">Loading...</p>
+	{:else if merchant}
+		<!-- Profile -->
+		<div class="bg-white rounded-xl border border-hair mb-6">
+			<div class="px-5 py-4 border-b border-hair">
+				<h3 class="text-[14px] font-semibold text-ink">Profile</h3>
+			</div>
+			<div class="p-5 space-y-4">
+				<div>
+					<label class="block text-[12px] font-medium text-slate mb-1.5">Email</label>
+					<p class="text-[14px] text-ink">{merchant.email}</p>
+				</div>
+				<div>
+					<label class="block text-[12px] font-medium text-slate mb-1.5">Business name</label>
+					<p class="text-[14px] text-ink">{merchant.business_name}</p>
+				</div>
+				<div>
+					<label class="block text-[12px] font-medium text-slate mb-1.5">Member since</label>
+					<p class="text-[14px] text-ink">{new Date(merchant.created_at).toLocaleDateString()}</p>
+				</div>
+				<div>
+					<label class="block text-[12px] font-medium text-slate mb-1.5">Status</label>
+					<span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold {merchant.is_active ? 'bg-badge-ok-bg text-badge-ok-text' : 'bg-badge-fail-bg text-badge-fail-text'}">
+						{merchant.is_active ? 'Active' : 'Inactive'}
+					</span>
+				</div>
+			</div>
+		</div>
 
-	<div class="bg-white rounded-xl border border-gray-100 p-6">
-		<h2 class="text-base font-semibold text-gray-900 mb-4">Projects</h2>
-		<p class="text-sm text-gray-500 mb-4">Organize your plans, customers, and subscriptions into projects.</p>
-		<button class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary/30 hover:text-primary transition-colors">
-			Manage Projects →
-		</button>
-	</div>
-
-	<div class="bg-white rounded-xl border border-gray-100 p-6">
-		<h2 class="text-base font-semibold text-gray-900 mb-4">Cancellation Policies</h2>
-		<p class="text-sm text-gray-500 mb-4">Configure refund rules for FIXED billing plan cancellations.</p>
-		<button class="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary/30 hover:text-primary transition-colors">
-			Manage Policies →
-		</button>
-	</div>
+		<!-- Danger zone -->
+		<div class="bg-white rounded-xl border border-badge-fail-text/20">
+			<div class="px-5 py-4 border-b border-badge-fail-text/20">
+				<h3 class="text-[14px] font-semibold text-badge-fail-text">Danger zone</h3>
+			</div>
+			<div class="p-5 flex items-center justify-between">
+				<div>
+					<p class="text-[13px] text-ink font-medium">Sign out</p>
+					<p class="text-[12px] text-slate">Sign out of your PayPulse account.</p>
+				</div>
+				<button onclick={logout} class="h-9 px-4 bg-badge-fail-text hover:opacity-90 text-white rounded-lg text-[13px] font-semibold transition-colors">
+					Sign out
+				</button>
+			</div>
+		</div>
+	{/if}
 </div>
