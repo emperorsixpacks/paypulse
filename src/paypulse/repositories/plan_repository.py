@@ -11,15 +11,15 @@ class PlanRepository(BaseRepository[Plan]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, Plan)
 
-    async def get_active_plans(self, merchant_id: UUID) -> list[Plan]:
+    async def get_active_by_project(self, project_id: UUID) -> list[Plan]:
         stmt = select(Plan).where(
-            Plan.merchant_id == merchant_id,
+            Plan.project_id == project_id,
             Plan.is_active == True,
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_merchant(self, merchant_id: UUID) -> list[Plan]:
-        stmt = select(Plan).where(Plan.merchant_id == merchant_id)
+    async def get_by_project(self, project_id: UUID) -> list[Plan]:
+        stmt = select(Plan).where(Plan.project_id == project_id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

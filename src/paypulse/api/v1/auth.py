@@ -3,12 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_current_merchant
 from src.paypulse.core.security import create_access_token, hash_password, verify_password
-from src.paypulse.models.merchant import ApiKey, Merchant, Project
+from src.paypulse.models.merchant import Merchant
 from src.paypulse.repositories.merchant_repository import ApiKeyRepository, MerchantRepository, ProjectRepository
 from src.paypulse.schemas.auth import (
     ApiKeyInfo,
     LoginRequest,
-    MerchantResponse,
     RegisterRequest,
     RegisterResponse,
     TokenResponse,
@@ -66,6 +65,12 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
     return TokenResponse(access_token=token)
 
 
-@router.get("/me", response_model=MerchantResponse)
+@router.get("/me")
 async def get_me(merchant: Merchant = Depends(get_current_merchant)):
-    return merchant
+    return {
+        "id": str(merchant.id),
+        "email": merchant.email,
+        "business_name": merchant.business_name,
+        "is_active": merchant.is_active,
+        "is_verified": merchant.is_verified,
+    }

@@ -1,7 +1,6 @@
 import uuid
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.paypulse.models.base import Base, BaseModel
@@ -28,6 +27,11 @@ class Project(BaseModel, Base):
 
     merchant: Mapped["Merchant"] = relationship(back_populates="projects")
     api_key: Mapped["ApiKey"] = relationship(back_populates="project", uselist=False)
+    plans: Mapped[list["Plan"]] = relationship(back_populates="project")  # noqa: F821
+    customers: Mapped[list["Customer"]] = relationship(back_populates="project")  # noqa: F821
+    subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="project")  # noqa: F821
+    invoices: Mapped[list["Invoice"]] = relationship(back_populates="project")  # noqa: F821
+    webhook_endpoints: Mapped[list["WebhookEndpoint"]] = relationship(back_populates="project")  # noqa: F821
 
 
 class ApiKey(BaseModel, Base):

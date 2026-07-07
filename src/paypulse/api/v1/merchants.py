@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.dependencies import get_db, get_current_merchant
+from src.paypulse.core.security import create_access_token, hash_password, verify_password
 from src.paypulse.models.merchant import Merchant
-from src.paypulse.repositories.merchant_repository import ApiKeyRepository, ProjectRepository
+from src.paypulse.repositories.merchant_repository import ApiKeyRepository, MerchantRepository, ProjectRepository
 from src.paypulse.schemas.merchant import ApiKeyCreate, ApiKeyCreatedResponse, ApiKeyResponse, ProjectCreate, ProjectResponse
 
 router = APIRouter(prefix="/merchants", tags=["merchants"])

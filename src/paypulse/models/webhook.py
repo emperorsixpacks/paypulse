@@ -12,13 +12,14 @@ from src.paypulse.models.enums import WebhookDeliveryStatus
 class WebhookEndpoint(BaseModel, Base):
     __tablename__ = "webhook_endpoints"
 
-    merchant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("merchants.id"), nullable=False)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     url: Mapped[str] = mapped_column(String(2048), nullable=False)
     secret: Mapped[str] = mapped_column(String(255), nullable=False)
     events: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     deliveries: Mapped[list["WebhookDelivery"]] = relationship(back_populates="endpoint")
+    project: Mapped["Project"] = relationship(back_populates="webhook_endpoints")  # noqa: F821
 
 
 class WebhookDelivery(BaseModel, Base):

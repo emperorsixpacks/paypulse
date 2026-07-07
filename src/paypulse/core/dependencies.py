@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.core.db import get_session
 from src.paypulse.core.security import decode_access_token
-from src.paypulse.models.merchant import Merchant
+from src.paypulse.models.merchant import Merchant, Project
 from src.paypulse.repositories.merchant_repository import ApiKeyRepository, MerchantRepository
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
@@ -30,19 +30,19 @@ async def get_current_merchant(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     repo = MerchantRepository(db)
-    merchant, err = await repo.get(merchant_id)
-    if err or merchant is None:
+    merchant = await repo.get(merchant_id)
+    if merchant is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Merchant not found")
 
     return merchant
 
 
-async def get_merchant_from_api_key(
+async def get_project_from_api_key(
     x_api_key: str = Header(...),
     db: AsyncSession = Depends(get_db),
-) -> Merchant:
+) -> Project:
     repo = ApiKeyRepository(db)
-    merchant = await repo.verify_key(x_api_key)
-    if merchant is None:
+    project = await repo.verify_key(x_api_key)
+    if project is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
-    return merchant
+    return project

@@ -10,10 +10,10 @@ from src.paypulse.models.base import Base, BaseModel
 class Customer(BaseModel, Base):
     __tablename__ = "customers"
     __table_args__ = (
-        UniqueConstraint("email", "merchant_id", name="uq_customer_email_merchant"),
+        UniqueConstraint("email", "project_id", name="uq_customer_email_project"),
     )
 
-    merchant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("merchants.id"), nullable=False)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     nomba_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -21,3 +21,4 @@ class Customer(BaseModel, Base):
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
     subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="customer")
+    project: Mapped["Project"] = relationship(back_populates="customers")  # noqa: F821

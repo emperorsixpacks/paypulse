@@ -24,7 +24,7 @@ from src.paypulse.models.enums import (
 class Plan(BaseModel, Base):
     __tablename__ = "plans"
 
-    merchant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("merchants.id"), nullable=False)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="NGN")
@@ -35,12 +35,13 @@ class Plan(BaseModel, Base):
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
     subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="plan")
+    project: Mapped["Project"] = relationship(back_populates="plans")  # noqa: F821
 
 
 class Subscription(BaseModel, Base):
     __tablename__ = "subscriptions"
 
-    merchant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("merchants.id"), nullable=False)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("customers.id"), nullable=False)
     plan_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("plans.id"), nullable=False)
     status: Mapped[SubscriptionStatus] = mapped_column(nullable=False)
@@ -51,17 +52,18 @@ class Subscription(BaseModel, Base):
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
-    customer: Mapped["Customer"] = relationship(back_populates="subscriptions")
-    plan: Mapped["Plan"] = relationship(back_populates="subscriptions")
+    customer: Mapped["Customer"] = relationship(back_populates="subscriptions")  # noqa: F821
+    plan: Mapped["Plan"] = relationship(back_populates="subscriptions")  # noqa: F821
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="subscription")
+    project: Mapped["Project"] = relationship(back_populates="subscriptions")  # noqa: F821
 
 
 class Invoice(BaseModel, Base):
     __tablename__ = "invoices"
 
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     subscription_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("subscriptions.id"), nullable=False)
     customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("customers.id"), nullable=False)
-    merchant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("merchants.id"), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="NGN")
     status: Mapped[InvoiceStatus] = mapped_column(nullable=False)
@@ -72,6 +74,7 @@ class Invoice(BaseModel, Base):
 
     subscription: Mapped["Subscription"] = relationship(back_populates="invoices")
     billing_attempts: Mapped[list["BillingAttempt"]] = relationship(back_populates="invoice")
+    project: Mapped["Project"] = relationship(back_populates="invoices")  # noqa: F821
 
 
 class BillingAttempt(BaseModel, Base):

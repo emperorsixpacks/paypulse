@@ -13,7 +13,7 @@ from src.paypulse.models.enums import CheckoutStatus
 class CheckoutSession(BaseModel, Base):
     __tablename__ = "checkout_sessions"
 
-    merchant_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("merchants.id"), nullable=False, index=True)
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id"), nullable=False, index=True)
     plan_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("plans.id"), nullable=False)
     code: Mapped[str] = mapped_column(String(32), unique=True, nullable=False, index=True)
     customer_email: Mapped[str | None] = mapped_column(String(255), nullable=True)

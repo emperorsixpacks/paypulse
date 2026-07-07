@@ -65,14 +65,14 @@ class ApiKeyRepository(BaseRepository[ApiKey]):
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def verify_key(self, plain_key: str) -> Merchant | None:
+    async def verify_key(self, plain_key: str) -> Project | None:
         prefix = plain_key[:8]
         api_key = await self.get_by_prefix(prefix)
         if api_key is None:
             return None
         if not verify_password(plain_key, api_key.hashed_key):
             return None
-        return api_key.project.merchant
+        return api_key.project
 
     async def revoke(self, key_id: UUID) -> bool:
         stmt = select(ApiKey).where(ApiKey.id == key_id)

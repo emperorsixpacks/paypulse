@@ -1,4 +1,3 @@
-from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -7,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.paypulse.models.checkout import CheckoutSession
 from src.paypulse.models.enums import CheckoutStatus
 from src.paypulse.repositories.base import BaseRepository
+from datetime import UTC, datetime
 
 
 class CheckoutRepository(BaseRepository[CheckoutSession]):
@@ -27,10 +27,10 @@ class CheckoutRepository(BaseRepository[CheckoutSession]):
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def get_by_merchant(self, merchant_id: UUID) -> list[CheckoutSession]:
+    async def get_by_project(self, project_id: UUID) -> list[CheckoutSession]:
         stmt = (
             select(CheckoutSession)
-            .where(CheckoutSession.merchant_id == merchant_id)
+            .where(CheckoutSession.project_id == project_id)
             .order_by(CheckoutSession.created_at.desc())
         )
         result = await self.session.execute(stmt)

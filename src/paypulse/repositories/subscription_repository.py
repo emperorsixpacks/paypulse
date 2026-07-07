@@ -15,9 +15,13 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         super().__init__(session, Subscription)
 
     async def get_due_subscriptions(self, as_of: datetime) -> list[Subscription]:
-        stmt = select(Subscription).where(
-            Subscription.status == SubscriptionStatus.ACTIVE,
-            Subscription.current_period_end <= as_of,
+        stmt = (
+            select(Subscription)
+            .options(selectinload(Subscription.plan))
+            .where(
+                Subscription.status == SubscriptionStatus.ACTIVE,
+                Subscription.current_period_end <= as_of,
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -31,9 +35,18 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_by_status(self, merchant_id: UUID, status: SubscriptionStatus) -> list[Subscription]:
+    async def get_by_project(self, project_id: UUID) -> list[Subscription]:
+        stmt = (
+            select(Subscription)
+            .options(selectinload(Subscription.plan))
+            .where(Subscription.project_id == project_id)
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_by_status(self, project_id: UUID, status: SubscriptionStatus) -> list[Subscription]:
         stmt = select(Subscription).where(
-            Subscription.merchant_id == merchant_id,
+            Subscription.project_id == project_id,
             Subscription.status == status,
         )
         result = await self.session.execute(stmt)
