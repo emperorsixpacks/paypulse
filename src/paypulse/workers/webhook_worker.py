@@ -17,14 +17,14 @@ async def deliver_webhook(ctx: dict, delivery_id: str):
     async with session_factory() as db:
         service = WebhookService(db)
         try:
-            success = await service.deliver(UUID(delivery_id))
-            if success:
+            ok = await service.deliver(UUID(delivery_id))
+            if ok:
                 logger.info("webhook_worker: delivered %s", delivery_id)
             else:
-                logger.warning("webhook_worker: failed to deliver %s", delivery_id)
+                logger.warning("webhook_worker: failed %s", delivery_id)
             await db.commit()
         except Exception:
-            logger.exception("webhook_worker: error delivering %s", delivery_id)
+            logger.exception("webhook_worker: error %s", delivery_id)
             await db.rollback()
 
     await engine.dispose()

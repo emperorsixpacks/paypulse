@@ -1,13 +1,15 @@
-import asyncio
 import logging
 from datetime import UTC, datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import selectinload
 
 from src.paypulse.core.settings import settings
 from src.paypulse.models import *  # noqa: F401, F403
+from src.paypulse.models.billing import Subscription
+from src.paypulse.models.enums import SubscriptionStatus
 from src.paypulse.services.billing_service import BillingService
-from src.paypulse.services.subscription_service import SubscriptionService
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +21,7 @@ async def run_billing_cycle():
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as db:
-        sub_service = SubscriptionService(db)
         billing_service = BillingService(db)
-
-        from src.paypulse.models.enums import SubscriptionStatus
-        from sqlalchemy import select
-        from src.paypulse.models.billing import Subscription
-        from sqlalchemy.orm import selectinload
 
         stmt = (
             select(Subscription)
@@ -45,23 +41,21 @@ async def run_billing_cycle():
             return
 
         logger.info("billing_worker: processing %d subscriptions", len(subscriptions))
-        success_count = 0
-        fail_count = 0
+        success = 0
+        failed = 0
 
         for sub in subscriptions:
             try:
-                result = await billing_service.charge_subscription(sub)
-                if result.success:
-                    success_count += 1
-                elif result.skipped:
-                    logger.info("billing_worker: skipped sub %s — %s", sub.id, result.reason)
-                else:
-                    fail_count += 1
+                r = await billing_service.charge_subscription(sub)
+                if r.success:
+                    success += 1
+                elif not r.skipped:
+                    failed += 1
             except Exception:
                 logger.exception("billing_worker: error charging sub %s", sub.id)
-                fail_count += 1
+                failed += 1
 
         await db.commit()
-        logger.info("billing_worker: done — %d success, %d failed", success_count, fail_count)
+        logger.info("billing_worker: done — %d success, %d failed", success, failed)
 
     await engine.dispose()

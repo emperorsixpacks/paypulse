@@ -1,11 +1,12 @@
-import asyncio
 import logging
 from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import selectinload
 
 from src.paypulse.core.settings import settings
 from src.paypulse.models import *  # noqa: F401, F403
+from src.paypulse.models.billing import Subscription
 from src.paypulse.services.billing_service import BillingService
 from src.paypulse.services.dunning_service import DunningService
 
@@ -22,22 +23,19 @@ async def run_dunning_cycle():
         dunning_service = DunningService(db)
         billing_service = BillingService(db)
 
-        due_retries = await dunning_service.get_due_retries(datetime.now(UTC))
+        due = await dunning_service.get_due_retries(datetime.now(UTC))
 
-        if not due_retries:
+        if not due:
             logger.info("dunning_worker: no due retries")
             await engine.dispose()
             return
 
-        logger.info("dunning_worker: processing %d retries", len(due_retries))
-        success_count = 0
-        fail_count = 0
+        logger.info("dunning_worker: processing %d retries", len(due))
+        success = 0
+        failed = 0
 
-        for attempt in due_retries[:BATCH_SIZE]:
+        for attempt in due[:BATCH_SIZE]:
             try:
-                from src.paypulse.models.billing import Subscription
-                from sqlalchemy.orm import selectinload
-
                 sub = await db.get(
                     Subscription,
                     attempt.invoice.subscription_id,
@@ -45,17 +43,16 @@ async def run_dunning_cycle():
                 )
                 if sub is None:
                     continue
-
-                result = await billing_service.charge_subscription(sub)
-                if result.success:
-                    success_count += 1
+                r = await billing_service.charge_subscription(sub)
+                if r.success:
+                    success += 1
                 else:
-                    fail_count += 1
+                    failed += 1
             except Exception:
-                logger.exception("dunning_worker: error retrying sub for attempt %s", attempt.id)
-                fail_count += 1
+                logger.exception("dunning_worker: error retrying %s", attempt.id)
+                failed += 1
 
         await db.commit()
-        logger.info("dunning_worker: done — %d success, %d failed", success_count, fail_count)
+        logger.info("dunning_worker: done — %d success, %d failed", success, failed)
 
     await engine.dispose()
