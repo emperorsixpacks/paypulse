@@ -60,6 +60,14 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_URL: str | None = None
 
+    # ARQ Workers (Redis Streams)
+    ARQ_QUEUE_NAME: str = "arq:queue:paypulse"
+    ARQ_STREAM_NAME: str = "arq:stream:paypulse"
+    ARQ_MAX_JOBS: int = 10
+    ARQ_JOB_TIMEOUT: int = 300
+    ARQ_KEEP_RESULT: int = 3600
+    ARQ_MAX_TRIES: int = 3
+
     # JWT
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
