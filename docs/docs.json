@@ -55,14 +55,75 @@
           {
             "group": "API Reference",
             "pages": [
-              "api-reference/auth",
-              "api-reference/plans",
-              "api-reference/customers",
-              "api-reference/subscriptions",
-              "api-reference/invoices",
-              "api-reference/checkout",
-              "api-reference/webhooks",
-              "api-reference/cancellation-policies"
+              {
+                "group": "Plans",
+                "pages": [
+                  "api-reference/plans/list",
+                  "api-reference/plans/create",
+                  "api-reference/plans/get",
+                  "api-reference/plans/update",
+                  "api-reference/plans/delete"
+                ]
+              },
+              {
+                "group": "Customers",
+                "pages": [
+                  "api-reference/customers/list",
+                  "api-reference/customers/create",
+                  "api-reference/customers/get",
+                  "api-reference/customers/update",
+                  "api-reference/customers/delete"
+                ]
+              },
+              {
+                "group": "Subscriptions",
+                "pages": [
+                  "api-reference/subscriptions/list",
+                  "api-reference/subscriptions/create",
+                  "api-reference/subscriptions/get",
+                  "api-reference/subscriptions/update",
+                  "api-reference/subscriptions/cancel",
+                  "api-reference/subscriptions/record-usage",
+                  "api-reference/subscriptions/usage-history"
+                ]
+              },
+              {
+                "group": "Invoices",
+                "pages": [
+                  "api-reference/invoices/list",
+                  "api-reference/invoices/get"
+                ]
+              },
+              {
+                "group": "Checkout",
+                "pages": [
+                  "api-reference/checkout/create-session",
+                  "api-reference/checkout/get-session",
+                  "api-reference/checkout/public-session",
+                  "api-reference/checkout/pay",
+                  "api-reference/checkout/health"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "api-reference/webhooks/list",
+                  "api-reference/webhooks/create",
+                  "api-reference/webhooks/get",
+                  "api-reference/webhooks/update",
+                  "api-reference/webhooks/delete"
+                ]
+              },
+              {
+                "group": "Cancellation Policies",
+                "pages": [
+                  "api-reference/cancellation-policies/list",
+                  "api-reference/cancellation-policies/create",
+                  "api-reference/cancellation-policies/get",
+                  "api-reference/cancellation-policies/update",
+                  "api-reference/cancellation-policies/delete"
+                ]
+              }
             ]
           }
         ]
