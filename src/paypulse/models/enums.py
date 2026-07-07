@@ -46,3 +46,10 @@ class CheckoutStatus(str, Enum):
 class BillingType(str, Enum):
     FIXED = "FIXED"
     METERED = "METERED"
+
+
+class RefundStatus(str, Enum):
+    NONE = "NONE"
+    PENDING = "PENDING"
+    PROCESSED = "PROCESSED"
+    FAILED = "FAILED"
