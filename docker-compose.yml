@@ -62,6 +62,16 @@ services:
     depends_on:
       - api
 
+  docs:
+    image: node:20-alpine
+    working_dir: /docs
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./docs:/docs
+    command: sh -c "npm install -g mintlify && mintlify dev --port 3000"
+
 volumes:
   pgdata:
   redisdata:
