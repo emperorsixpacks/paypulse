@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { api, setToken, setApiKey } from '$lib/api';
 	import { goto } from '$app/navigation';
 
 	let email = $state('');
@@ -6,96 +7,80 @@
 	let loading = $state(false);
 	let error = $state('');
 
-	async function handleLogin(e: Event) {
-		e.preventDefault();
+	async function login() {
 		loading = true;
 		error = '';
-
 		try {
-			const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/auth/login`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, password }),
-			});
+			const result = await api.login({ email, password });
+			setToken(result.access_token);
 
-			if (!res.ok) {
-				const data = await res.json();
-				error = data.detail || 'Invalid credentials';
-				return;
+			const projects = await api.listProjects();
+			if (projects.length > 0) {
+				const keys = await api.listApiKeys();
+				if (keys.length > 0) {
+					setApiKey(keys[0].key);
+				}
 			}
 
-			const data = await res.json();
-			localStorage.setItem('token', data.access_token);
 			goto('/dashboard');
-		} catch {
-			error = 'Connection failed. Is the API running?';
+		} catch (e: any) {
+			error = e.message;
 		} finally {
 			loading = false;
 		}
 	}
 </script>
 
-<svelte:head>
-	<title>Login — PayPulse</title>
-</svelte:head>
+<svelte:head><title>Sign in — PayPulse</title></svelte:head>
 
-<div class="min-h-screen flex items-center justify-center bg-surface px-4">
+<div class="min-h-screen bg-paper flex items-center justify-center px-4">
 	<div class="w-full max-w-sm">
 		<!-- Logo -->
-		<div class="flex items-center justify-center gap-2 mb-8">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-				<svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-				</svg>
-			</div>
-			<span class="text-2xl font-bold text-gray-900">PayPulse</span>
+		<div class="text-center mb-8">
+			<img src="/logo.svg" alt="PayPulse" class="h-10 mx-auto mb-4" />
+			<h1 class="text-[22px] font-bold text-ink font-[family-name:var(--font-display)]">Sign in</h1>
+			<p class="text-[13px] text-slate mt-1">Welcome back to your dashboard.</p>
 		</div>
 
-		<div class="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
-			<h1 class="text-xl font-bold text-gray-900 mb-1">Welcome back</h1>
-			<p class="text-sm text-gray-500 mb-6">Sign in to your merchant dashboard</p>
-
+		<div class="bg-white rounded-2xl border border-hair p-6">
 			{#if error}
-				<div class="mb-4 p-3 rounded-lg bg-red-50 text-sm text-red-600">{error}</div>
+				<p class="text-[13px] text-badge-fail-text bg-badge-fail-bg rounded-lg px-4 py-2.5 mb-4">{error}</p>
 			{/if}
 
-			<form onsubmit={handleLogin} class="space-y-4">
+			<div class="space-y-4">
 				<div>
-					<label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+					<label class="block text-[12px] font-medium text-slate mb-1.5">Email</label>
 					<input
-						id="email"
 						type="email"
 						bind:value={email}
-						required
-						class="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-						placeholder="you@company.com"
+						class="w-full h-10 px-3 bg-paper border border-hair rounded-lg text-[14px] text-ink outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/10 transition-all"
+						placeholder="you@example.com"
 					/>
 				</div>
-
 				<div>
-					<label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+					<label class="block text-[12px] font-medium text-slate mb-1.5">Password</label>
 					<input
-						id="password"
 						type="password"
 						bind:value={password}
-						required
-						class="w-full px-3.5 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+						class="w-full h-10 px-3 bg-paper border border-hair rounded-lg text-[14px] text-ink outline-none focus:border-cobalt focus:ring-2 focus:ring-cobalt/10 transition-all"
 						placeholder="••••••••"
+						onkeydown={(e) => { if (e.key === 'Enter') login(); }}
 					/>
 				</div>
+			</div>
 
-				<button
-					type="submit"
-					disabled={loading}
-					class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-				>
-					{loading ? 'Signing in...' : 'Sign In'}
-				</button>
-			</form>
+			<button
+				onclick={login}
+				disabled={loading || !email || !password}
+				class="w-full h-11 mt-6 bg-cobalt hover:bg-cobalt-dim text-white rounded-lg text-[14px] font-semibold transition-colors disabled:opacity-50"
+			>
+				{loading ? 'Signing in...' : 'Sign in'}
+			</button>
+
+			<p class="text-[13px] text-slate text-center mt-4">
+				Don't have an account?
+				<a href="https://paypulse.ng/register" class="text-cobalt hover:text-cobalt-dim font-medium">Create one</a>
+			</p>
 		</div>
-
-		<p class="mt-6 text-center text-sm text-gray-500">
-			Don't have an account? <a href="/register" class="font-medium text-primary hover:text-primary-dark">Create one</a>
-		</p>
 	</div>
 </div>
