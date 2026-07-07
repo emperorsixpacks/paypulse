@@ -18,6 +18,7 @@ from src.paypulse.models.enums import (
     BillingInterval,
     BillingType,
     InvoiceStatus,
+    RefundStatus,
     SubscriptionStatus,
 )
 
@@ -54,6 +55,7 @@ class Subscription(BaseModel, Base):
     trial_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)
+    cancelled_by: Mapped[str | None] = mapped_column(String(50), nullable=True)
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
     customer: Mapped["Customer"] = relationship(back_populates="subscriptions")  # noqa: F821
@@ -75,6 +77,9 @@ class Invoice(BaseModel, Base):
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     nomba_transaction_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    refund_amount: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True, default=0)
+    refund_status: Mapped[RefundStatus] = mapped_column(nullable=False, default=RefundStatus.NONE)
+    refund_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
     subscription: Mapped["Subscription"] = relationship(back_populates="invoices")

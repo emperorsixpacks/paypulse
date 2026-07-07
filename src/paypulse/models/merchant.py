@@ -32,6 +32,7 @@ class Project(BaseModel, Base):
     subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="project")  # noqa: F821
     invoices: Mapped[list["Invoice"]] = relationship(back_populates="project")  # noqa: F821
     webhook_endpoints: Mapped[list["WebhookEndpoint"]] = relationship(back_populates="project")  # noqa: F821
+    cancellation_policies: Mapped[list["CancellationPolicy"]] = relationship(back_populates="project")  # noqa: F821
 
 
 class ApiKey(BaseModel, Base):

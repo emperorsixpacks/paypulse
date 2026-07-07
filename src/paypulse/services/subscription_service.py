@@ -3,8 +3,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.paypulse.models.enums import BillingInterval, InvoiceStatus, SubscriptionStatus
+from src.paypulse.models.enums import BillingInterval, InvoiceStatus, RefundStatus, SubscriptionStatus
 from src.paypulse.repositories.subscription_repository import SubscriptionRepository
+from src.paypulse.services.refund_service import RefundService
 
 
 class SubscriptionService:
@@ -50,17 +51,57 @@ class SubscriptionService:
             return await self.repo.get_by_status(project_id, status)
         return await self.repo.get_by_project(project_id)
 
-    async def cancel(self, subscription_id: UUID, project_id: UUID, cancel_at_period_end: bool = False):
+    async def cancel(
+        self,
+        subscription_id: UUID,
+        project_id: UUID,
+        cancel_at_period_end: bool = False,
+        cancelled_by: str = "merchant",
+    ):
         sub = await self.get(subscription_id, project_id)
         if sub is None:
             return None
+
+        sub.cancelled_by = cancelled_by
+
         if cancel_at_period_end:
             sub.cancel_at_period_end = True
-        else:
-            sub.status = SubscriptionStatus.CANCELLED
-            sub.cancelled_at = datetime.now(UTC)
+            await self.db.flush()
+            return sub, None
+
+        now = datetime.now(UTC)
+        sub.status = SubscriptionStatus.CANCELLED
+        sub.cancelled_at = now
+        sub.cancel_at_period_end = False
+
+        refund_service = RefundService(self.db)
+        refund_info = await refund_service.calculate_refund(sub)
+
+        if refund_info["refund_amount"] > 0:
+            invoice = await self._get_latest_paid_invoice(sub.id)
+            if invoice:
+                invoice.refund_amount = refund_info["refund_amount"]
+                invoice.refund_status = RefundStatus.PENDING
+                invoice.refund_reason = f"Cancellation refund ({refund_info['refund_type']})"
+
         await self.db.flush()
-        return sub
+        return sub, refund_info
+
+    async def _get_latest_paid_invoice(self, subscription_id: UUID):
+        from sqlalchemy import select
+        from src.paypulse.models.billing import Invoice
+
+        stmt = (
+            select(Invoice)
+            .where(
+                Invoice.subscription_id == subscription_id,
+                Invoice.status == InvoiceStatus.PAID,
+            )
+            .order_by(Invoice.created_at.desc())
+            .limit(1)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
 
     async def extend_period(self, subscription):
         subscription.current_period_start = subscription.current_period_end
