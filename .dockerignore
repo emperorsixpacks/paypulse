@@ -1,0 +1,17 @@
+.git
+node_modules
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+*.pyc
+.env
+.env.*
+config/.env
+config/.env.*
+*.log
+.DS_Store
+src/web/node_modules
+src/dashboard/node_modules
+src/checkout/node_modules
+docs/node_modules
