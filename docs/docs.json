@@ -1,0 +1,160 @@
+{
+  "theme": "mint",
+  "name": "PayPulse",
+  "colors": {
+    "primary": "#2E4CFF",
+    "light": "#D6FA5C",
+    "dark": "#0E1116"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo.svg",
+    "dark": "/logo-dark.svg"
+  },
+  "appearance": {
+    "default": "dark",
+    "strict": null
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://dashboard.paypulse.ng"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Start Free Trial",
+      "href": "https://paypulse.ng/register"
+    }
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://twitter.com/paypulse",
+      "github": "https://github.com/paypulse"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/auth",
+              "api-reference/plans",
+              "api-reference/customers",
+              "api-reference/subscriptions",
+              "api-reference/invoices",
+              "api-reference/checkout",
+              "api-reference/webhooks",
+              "api-reference/cancellation-policies"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/usage-billing",
+              "guides/webhooks",
+              "guides/cancellation-policies"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Playground",
+        "groups": [
+          {
+            "group": "Plans",
+            "pages": [
+              "api-playground/plans/list",
+              "api-playground/plans/create",
+              "api-playground/plans/get",
+              "api-playground/plans/update",
+              "api-playground/plans/delete"
+            ]
+          },
+          {
+            "group": "Customers",
+            "pages": [
+              "api-playground/customers/list",
+              "api-playground/customers/create",
+              "api-playground/customers/get",
+              "api-playground/customers/update",
+              "api-playground/customers/delete"
+            ]
+          },
+          {
+            "group": "Subscriptions",
+            "pages": [
+              "api-playground/subscriptions/list",
+              "api-playground/subscriptions/create",
+              "api-playground/subscriptions/get",
+              "api-playground/subscriptions/update",
+              "api-playground/subscriptions/cancel",
+              "api-playground/subscriptions/record-usage",
+              "api-playground/subscriptions/usage-history"
+            ]
+          },
+          {
+            "group": "Invoices",
+            "pages": [
+              "api-playground/invoices/list",
+              "api-playground/invoices/get"
+            ]
+          },
+          {
+            "group": "Checkout",
+            "pages": [
+              "api-playground/checkout/create-session",
+              "api-playground/checkout/get-session",
+              "api-playground/checkout/public-session",
+              "api-playground/checkout/pay",
+              "api-playground/checkout/health"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-playground/webhooks/list",
+              "api-playground/webhooks/create",
+              "api-playground/webhooks/get",
+              "api-playground/webhooks/update",
+              "api-playground/webhooks/delete"
+            ]
+          },
+          {
+            "group": "Cancellation Policies",
+            "pages": [
+              "api-playground/cancellation-policies/list",
+              "api-playground/cancellation-policies/create",
+              "api-playground/cancellation-policies/get",
+              "api-playground/cancellation-policies/update",
+              "api-playground/cancellation-policies/delete",
+              "api-playground/cancellation-policies/delete-policy"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
