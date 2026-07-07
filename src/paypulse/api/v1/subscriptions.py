@@ -6,14 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.paypulse.core.dependencies import get_db, get_project_from_api_key
 from src.paypulse.models.enums import SubscriptionStatus
 from src.paypulse.models.merchant import Project
-from src.paypulse.repositories.subscription_repository import SubscriptionRepository
-from src.paypulse.schemas.subscription import SubscriptionResponse
+from src.paypulse.schemas.subscription import CancelRequest, CancelResponse, SubscriptionResponse
 from src.paypulse.schemas.usage import (
     CurrentUsageResponse,
     UsageReportRequest,
     UsageReportResponse,
     UsageRecordResponse,
 )
+from src.paypulse.services.subscription_service import SubscriptionService
 from src.paypulse.services.usage_service import UsageService
 
 router = APIRouter(prefix="/subscriptions", tags=["subscriptions"])
@@ -25,11 +25,8 @@ async def list_subscriptions(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = SubscriptionRepository(db)
-    if status_filter:
-        subs = await repo.get_by_status(project.id, status_filter)
-    else:
-        subs = await repo.get_by_project(project.id)
+    service = SubscriptionService(db)
+    subs = await service.list(project.id, status_filter)
     return [
         SubscriptionResponse(
             id=s.id,
@@ -42,6 +39,8 @@ async def list_subscriptions(
             current_period_start=s.current_period_start,
             current_period_end=s.current_period_end,
             cancelled_at=s.cancelled_at,
+            cancel_at_period_end=s.cancel_at_period_end,
+            cancelled_by=s.cancelled_by,
             created_at=s.created_at,
         )
         for s in subs
@@ -54,9 +53,9 @@ async def get_subscription(
     project: Project = Depends(get_project_from_api_key),
     db: AsyncSession = Depends(get_db),
 ):
-    repo = SubscriptionRepository(db)
-    sub = await repo.get(UUID(subscription_id))
-    if sub is None or sub.project_id != project.id:
+    service = SubscriptionService(db)
+    sub = await service.get(UUID(subscription_id), project.id)
+    if sub is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscription not found")
 
     return SubscriptionResponse(
@@ -70,7 +69,37 @@ async def get_subscription(
         current_period_start=sub.current_period_start,
         current_period_end=sub.current_period_end,
         cancelled_at=sub.cancelled_at,
+        cancel_at_period_end=sub.cancel_at_period_end,
+        cancelled_by=sub.cancelled_by,
         created_at=sub.created_at,
+    )
+
+
+@router.post("/{subscription_id}/cancel", response_model=CancelResponse)
+async def cancel_subscription(
+    subscription_id: str,
+    body: CancelRequest,
+    project: Project = Depends(get_project_from_api_key),
+    db: AsyncSession = Depends(get_db),
+):
+    service = SubscriptionService(db)
+    result = await service.cancel(
+        UUID(subscription_id),
+        project.id,
+        cancel_at_period_end=body.cancel_at_period_end,
+        cancelled_by="merchant",
+    )
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscription not found")
+
+    sub, refund_info = result
+
+    return CancelResponse(
+        subscription_id=sub.id,
+        status=sub.status.value,
+        cancelled_at=sub.cancelled_at,
+        cancel_at_period_end=sub.cancel_at_period_end,
+        refund=refund_info,
     )
 
 

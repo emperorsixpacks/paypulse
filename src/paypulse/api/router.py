@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from src.paypulse.api.v1.auth import router as auth_router
+from src.paypulse.api.v1.cancellation import router as cancellation_router
 from src.paypulse.api.v1.checkout import router as checkout_router
 from src.paypulse.api.v1.customers import router as customers_router
 from src.paypulse.api.v1.invoices import router as invoices_router
@@ -20,4 +21,5 @@ api_router.include_router(customers_router)
 api_router.include_router(subscriptions_router)
 api_router.include_router(invoices_router)
 api_router.include_router(webhooks_router)
+api_router.include_router(cancellation_router)
 api_router.include_router(public_router)

@@ -12,6 +12,9 @@ class InvoiceResponse(BaseModel):
     status: str
     due_date: datetime
     paid_at: datetime | None
+    refund_amount: float
+    refund_status: str
+    refund_reason: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}
