@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.paypulse.models.enums import InvoiceStatus
 from src.paypulse.models.billing import Invoice
@@ -13,7 +14,11 @@ class InvoiceRepository(BaseRepository[Invoice]):
         super().__init__(session, Invoice)
 
     async def get_by_customer(self, customer_id: UUID) -> list[Invoice]:
-        stmt = select(Invoice).where(Invoice.customer_id == customer_id)
+        stmt = (
+            select(Invoice)
+            .options(selectinload(Invoice.customer))
+            .where(Invoice.customer_id == customer_id)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
@@ -23,14 +28,22 @@ class InvoiceRepository(BaseRepository[Invoice]):
         return list(result.scalars().all())
 
     async def get_by_project(self, project_id: UUID) -> list[Invoice]:
-        stmt = select(Invoice).where(Invoice.project_id == project_id)
+        stmt = (
+            select(Invoice)
+            .options(selectinload(Invoice.customer))
+            .where(Invoice.project_id == project_id)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def get_pending(self, project_id: UUID) -> list[Invoice]:
-        stmt = select(Invoice).where(
-            Invoice.project_id == project_id,
-            Invoice.status == InvoiceStatus.PENDING,
+        stmt = (
+            select(Invoice)
+            .options(selectinload(Invoice.customer))
+            .where(
+                Invoice.project_id == project_id,
+                Invoice.status == InvoiceStatus.PENDING,
+            )
         )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

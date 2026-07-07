@@ -29,7 +29,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
     async def get_by_customer(self, customer_id: UUID) -> list[Subscription]:
         stmt = (
             select(Subscription)
-            .options(selectinload(Subscription.plan))
+            .options(selectinload(Subscription.plan), selectinload(Subscription.customer))
             .where(Subscription.customer_id == customer_id)
         )
         result = await self.session.execute(stmt)
@@ -38,7 +38,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
     async def get_by_project(self, project_id: UUID) -> list[Subscription]:
         stmt = (
             select(Subscription)
-            .options(selectinload(Subscription.plan))
+            .options(selectinload(Subscription.plan), selectinload(Subscription.customer))
             .where(Subscription.project_id == project_id)
         )
         result = await self.session.execute(stmt)

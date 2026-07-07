@@ -21,4 +21,5 @@ class Customer(BaseModel, Base):
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
     subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="customer")
+    invoices: Mapped[list["Invoice"]] = relationship(back_populates="customer")  # noqa: F821
     project: Mapped["Project"] = relationship(back_populates="customers")  # noqa: F821

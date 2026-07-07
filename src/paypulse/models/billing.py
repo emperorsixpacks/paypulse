@@ -73,6 +73,7 @@ class Invoice(BaseModel, Base):
     extra_data: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
 
     subscription: Mapped["Subscription"] = relationship(back_populates="invoices")
+    customer: Mapped["Customer"] = relationship(back_populates="invoices")  # noqa: F821
     billing_attempts: Mapped[list["BillingAttempt"]] = relationship(back_populates="invoice")
     project: Mapped["Project"] = relationship(back_populates="invoices")  # noqa: F821
 
