@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.paypulse.models.enums import SubscriptionStatus
 from src.paypulse.models.billing import Subscription
@@ -22,7 +23,11 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         return list(result.scalars().all())
 
     async def get_by_customer(self, customer_id: UUID) -> list[Subscription]:
-        stmt = select(Subscription).where(Subscription.customer_id == customer_id)
+        stmt = (
+            select(Subscription)
+            .options(selectinload(Subscription.plan))
+            .where(Subscription.customer_id == customer_id)
+        )
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
