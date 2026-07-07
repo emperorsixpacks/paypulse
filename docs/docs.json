@@ -13,7 +13,7 @@
   },
   "appearance": {
     "default": "dark",
-    "strict": null
+    "strict": false
   },
   "navbar": {
     "links": [
