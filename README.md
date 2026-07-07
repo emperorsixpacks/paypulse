@@ -1,35 +1,20 @@
-# Paypulse
+# PayPulse
 
-Paypulse is a developer-first subscription and recurring billing engine built on top of **Nomba's** payment infrastructure. It automates plan creation, billing cycle execution, card tokenization workflows, smart retries, and dunning cycles for digital products and SaaS platforms.
-
----
-
-## Design Philosophy & Architecture Decisions
-
-Paypulse is architected to solve the primary challenges of recurring payments in the local market: payment failures, card expirations, and manual charge retry logic. The system is designed based on several core principles:
-
-### 1. Asynchronous Decoupling & Queueing
-All database polling, email delivery, webhook notifications, and payment processing requests to Nomba's API are offloaded to background task workers. FastAPI handles incoming requests synchronously and responds instantly, while **Celery** and **Redis** handle heavy or time-delayed execution (such as transaction requeries and charge retries).
-
-### 2. Subscription State Transition Lifecycle
-Subscriptions move through a flat, deterministic state machine. This design prevents database race conditions, simplifies merchant system integration, and ensures maximum compatibility with API serialization and graphing engines:
-- **Pending**: Customer has initiated checkout but initial payment is not yet verified.
-- **Active**: Customer card is tokenized, and the subscription is active.
-- **Dunning**: Payment failed. The system schedules automatic retry sweeps (24h, 48h, and 72h intervals) before marking the subscription as expired.
-- **Expired/Cancelled**: Subscriptions that have failed all retry periods or have been explicitly terminated.
-
-### 3. Separation of Concerns
-The database schemas for customers, plans, invoices, and card tokens are managed in a robust PostgreSQL storage layer, ensuring audit trails are kept for every billing attempt. Paypulse uses Nomba's payment APIs exclusively for checkout ordering and tokenized card charging, delegating secure card data management to the gateway.
+A developer-first subscription and recurring billing engine built on **Nomba's** payment infrastructure. Automates plan creation, billing cycles, card tokenization, smart retries, dunning, and usage-based pricing for digital products and SaaS platforms.
 
 ---
 
 ## Tech Stack
 
-- **Backend Framework**: FastAPI (Python >= 3.13)
-- **Task Runner**: Celery (integrated with Redis for event queues and lock states)
-- **Database**: PostgreSQL (SQLAlchemy + Asyncpg for asynchronous operations, Alembic for migrations)
-- **Package & Environment Manager**: `uv` (modern Python package resolver)
-- **Testing**: Pytest
+| Layer | Technology |
+|---|---|
+| **Backend** | Python 3.13, FastAPI, SQLAlchemy 2.0 (asyncpg), Alembic |
+| **Database** | PostgreSQL 16, Redis 7 |
+| **Task Queue** | ARQ (Redis Streams) |
+| **Frontend** | SvelteKit 5, Tailwind CSS 4, Vite 8 |
+| **Docs** | Mintlify (auto-generated OpenAPI) |
+| **Deployment** | Docker Compose (6 services) |
+| **Package Manager** | uv (Python), npm (JS) |
 
 ---
 
@@ -37,47 +22,138 @@ The database schemas for customers, plans, invoices, and card tokens are managed
 
 ```text
 paypulse/
-├── config/                  # Configuration files
-├── diagrams/                # Architectural flow charts and lifecycle diagrams
+├── config/                        # Environment configs (.env.dev, .env.prod)
 ├── src/
-│   └── paypulse/
-│       ├── api/             # Web API routes and controllers
-│       ├── core/            # App setup, settings, utilities, security
-│       ├── infrastructure/
-│       │   └── nomba/       # Nomba SDK integration (client, dtos, config)
-│       └── models/          # Database models (Subscriptions, Customers, Plans)
-├── tests/                   # Pytest test suites
-├── pyproject.toml           # Project metadata and dependencies
-└── uv.lock                  # UV lockfile
+│   ├── paypulse/                  # Python backend
+│   │   ├── api/v1/                # FastAPI route handlers (10 routers)
+│   │   ├── core/                  # Settings, DB engine, security
+│   │   ├── infrastructure/nomba/  # Nomba SDK (HTTP client, DTOs, config)
+│   │   ├── models/                # SQLAlchemy models (12 tables)
+│   │   ├── repositories/          # Data access layer (9 repos)
+│   │   ├── schemas/               # Pydantic request/response schemas
+│   │   └── services/              # Business logic (11 services)
+│   ├── web/                       # SvelteKit landing page
+│   ├── dashboard/                 # SvelteKit merchant dashboard
+│   ├── checkout/                  # SvelteKit checkout app
+│   └── workers/                   # ARQ background workers
+├── docs/                          # Mintlify documentation
+├── tests/                         # Pytest test suites
+├── API_ENDPOINTS.md               # Full API reference
+├── docker-compose.yml             # 6-service orchestration
+├── Dockerfile                     # API container
+├── pyproject.toml                 # Python dependencies
+└── uv.lock                        # uv lockfile
 ```
+
+---
+
+## Features
+
+### Backend (37 API Endpoints)
+
+**Authentication & Merchants**
+- Register, login, JWT auth
+- Merchant profile, project CRUD, API key management (test/live)
+
+**Billing Core**
+- Plans: CRUD with billing intervals (daily/weekly/monthly/quarterly/annually)
+- Subscriptions: list, get, cancel with refund calculation
+- Invoices: list, get with refund status tracking
+- Checkout sessions: create, get, cancel with shareable links
+- Usage reporting and history (metered billing)
+
+**Revenue Operations**
+- Cancellation policies: full/none/percentage/prorate refund types, window, fees, default policy
+- Webhooks: create/delete endpoints with event subscriptions
+- Refund calculation service (prorated by remaining period ratio)
+
+**Background Workers (ARQ)**
+- `billing_worker`: Invoice generation, billing attempt execution
+- `dunning_worker`: Smart retry logic (24h, 48h, 72h intervals)
+- `webhook_worker`: Outbound webhook delivery with retry
+
+### Landing Page (`src/web/`)
+- Dark theme (ink + cobalt + lime palette)
+- Receipt-style hero with floating invoice cards
+- Features grid, stats section, CTA, footer
+- Social meta tags (Open Graph, Twitter)
+- Space Grotesk / Inter / IBM Plex Mono fonts
+
+### Merchant Dashboard (`src/dashboard/`) — 11 Pages
+- **Overview**: MRR, active subs, failed invoices, cancelled stats + recent invoices table
+- **Plans**: Full CRUD with create/edit modal, interval formatting
+- **Customers**: List + detail view with subscriptions/invoices tabs
+- **Subscriptions**: Status filter pills, cancel modal with period-end toggle + refund response
+- **Invoices**: Table with refund amount + refund status badges
+- **Checkout**: Create session, copy shareable link, cancel
+- **Cancellation Policies**: Full CRUD with refund type selector, fee, window, default toggle
+- **Webhooks**: Endpoint list + add form with event tags
+- **Developers**: API key management (create test/live, revoke, copy)
+- **Settings**: Profile display + sign out
+- **Login**: Email/password auth, JWT + API key storage
+
+### Documentation (`docs/`)
+- Mintlify with PayPulse branding (cobalt/lime/ink)
+- Auto-generated OpenAPI spec from FastAPI (28 paths)
+- API reference pages using `openapi:` references
+- Guides: usage billing, webhooks, cancellation policies
 
 ---
 
 ## Getting Started
 
-### 1. Requirements
+### Requirements
 
 - Python >= 3.13
+- Node.js >= 20
 - [uv](https://github.com/astral-sh/uv) package manager
-- Redis
-- PostgreSQL
+- PostgreSQL 16
+- Redis 7
+- Docker & Docker Compose (optional)
 
-### 2. Installation
-
-Clone the repository and install dependencies using `uv`:
+### Quick Start (Docker)
 
 ```bash
-uv pip install -e .
+# Start all services
+sudo docker compose up -d
+
+# Services:
+#   API        → http://localhost:8000
+#   Web        → http://localhost:3000
+#   Dashboard  → http://localhost:3001
+#   Docs       → http://localhost:3002
+#   PostgreSQL → localhost:5432
+#   Redis      → localhost:6379
 ```
 
-### 3. Environment Configuration
+### Quick Start (Local)
 
-Create a `.env` file inside `config/` (or set them directly in your environment):
+```bash
+# Install Python deps
+uv sync
+
+# Install JS deps
+cd src/web && npm install && cd ../..
+cd src/dashboard && npm install && cd ../..
+
+# Create config/.env (see config/.env.dev for template)
+
+# Run API
+uv run uvicorn src.paypulse.main:app --reload
+
+# Run landing page
+cd src/web && npm run dev
+
+# Run dashboard
+cd src/dashboard && npm run dev
+```
+
+### Environment Variables
 
 ```ini
 ENVIRONMENT=dev
-DB_USER=postgres
-DB_PASSWORD=your_password
+DB_USER=paypulse
+DB_PASSWORD=paypulse_dev
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=paypulse
@@ -85,27 +161,32 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 JWT_SECRET_KEY=your_jwt_secret
 
-# Nomba Credentials
-NOMBA_BASE_URL=https://sandbox.nomba.com
-NOMBA_CLIENT_ID=your_client_id
-NOMBA_CLIENT_SECRET=your_client_secret
-NOMBA_ACCOUNT_ID=your_account_id
+# Nomba (sandbox)
+NOMBA_CLIENT_ID=
+NOMBA_CLIENT_SECRET=
+NOMBA_ACCOUNT_ID=
 ```
 
-### 4. Running the Application
-
-To run the web API server:
+### Database Migrations
 
 ```bash
-uv run uvicorn src.paypulse.api.main:app --reload
+# Generate migration
+uv run alembic revision --autogenerate -m "description"
+
+# Apply migrations
+uv run alembic upgrade head
 ```
 
 ---
 
 ## Testing
 
-To run the test suite:
-
 ```bash
 PYTHONPATH=. uv run pytest
 ```
+
+---
+
+## License
+
+Private. All rights reserved.
