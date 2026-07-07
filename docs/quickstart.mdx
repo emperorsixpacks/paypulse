@@ -1,0 +1,69 @@
+---
+title: Quickstart
+description: Get your first API call running in 2 minutes.
+---
+
+## 1. Register an account
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "you@company.com",
+    "business_name": "Acme Inc",
+    "password": "securepassword123"
+  }'
+```
+
+<Note>
+Save the `access_token` from the response — you'll need it for merchant management routes.
+</Note>
+
+## 2. Get your API key
+
+After registration, you'll receive API keys in the response. Use the test key for development:
+
+```
+pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+## 3. Create a plan
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/plans \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -d '{
+    "name": "Growth",
+    "amount": 25000,
+    "currency": "NGN",
+    "interval": "MONTHLY",
+    "interval_count": 1
+  }'
+```
+
+## 4. Create a checkout session
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/checkout/sessions \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+  -d '{
+    "plan_id": "<plan_id_from_step_3>",
+    "success_url": "https://yourapp.com/success",
+    "cancel_url": "https://yourapp.com/cancel"
+  }'
+```
+
+The response includes a `checkout_url` — redirect your customer there to complete payment.
+
+## 5. Check the subscription
+
+Once payment completes, the customer has an active subscription. List it:
+
+```bash
+curl https://api.paypulse.app/api/v1/subscriptions \
+  -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+That's it — you've gone from zero to accepting payments.

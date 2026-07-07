@@ -1,0 +1,107 @@
+---
+title: "Subscriptions"
+description: "Manage subscriptions, cancellations, and usage billing."
+openapi: "/openapi.json" "GET /api/v1/subscriptions" "GET /api/v1/subscriptions/{subscription_id}" "POST /api/v1/subscriptions/{subscription_id}/cancel" "POST /api/v1/subscriptions/{subscription_id}/usage" "GET /api/v1/subscriptions/{subscription_id}/usage" "GET /api/v1/subscriptions/{subscription_id}/usage/history"
+---
+
+<ParamField header="X-Api-Key" type="string" required>
+  Your API key.
+</ParamField>
+
+## Cancel subscription
+
+<ParamField param="subscription_id" type="string" required>
+  Subscription UUID.
+</ParamField>
+
+<ParamField body="cancel_at_period_end" type="boolean" default="false">
+  If `true`, defers cancellation to end of billing period.
+</ParamField>
+
+For **FIXED** billing plans, immediate cancellation triggers a refund based on your [cancellation policy](/api-reference/cancellation-policies).
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/subscriptions/{subscription_id}/cancel \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "cancel_at_period_end": false
+  }'
+```
+</CodeGroup>
+
+```json
+{
+  "subscription_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "CANCELLED",
+  "cancelled_at": "2026-01-20T14:00:00Z",
+  "cancel_at_period_end": false,
+  "refund": {
+    "refund_amount": 16666.67,
+    "policy_name": "Standard Refund",
+    "refund_type": "prorate",
+    "remaining_ratio": 0.6667,
+    "period_start": "2026-01-15T10:30:00Z",
+    "period_end": "2026-02-15T10:30:00Z",
+    "cancellation_fee": 0
+  }
+}
+```
+
+<Note>
+The `refund` field is only present for FIXED billing plans with an active cancellation policy.
+</Note>
+
+---
+
+## Report usage
+
+For metered plans. Append a usage record.
+
+<ParamField param="subscription_id" type="string" required>
+  Subscription UUID.
+</ParamField>
+
+<ParamField body="quantity" type="number" required>
+  Units consumed (must be > 0).
+</ParamField>
+
+<ParamField body="idempotency_key" type="string" required>
+  Unique key to prevent duplicates (max 255 chars).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Human-readable description.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/subscriptions/{subscription_id}/usage \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "quantity": 1500,
+    "description": "API calls for Jan 15",
+    "idempotency_key": "usage_2026_01_15_api_calls"
+  }'
+```
+</CodeGroup>
+
+```json
+{
+  "record": {
+    "id": "...",
+    "subscription_id": "...",
+    "quantity": 1500,
+    "description": "API calls for Jan 15",
+    "idempotency_key": "usage_2026_01_15_api_calls",
+    "billed": false,
+    "billed_at": null,
+    "invoice_id": null,
+    "timestamp": "2026-01-15T14:00:00Z",
+    "created_at": "2026-01-15T14:00:00Z"
+  },
+  "created": true
+}
+```

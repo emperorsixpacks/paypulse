@@ -1,0 +1,104 @@
+---
+title: "Webhooks"
+description: "How to receive and verify webhook events from PayPulse."
+---
+
+## Setting up webhooks
+
+Register an HTTPS endpoint to receive events:
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/webhooks \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -d '{
+    "url": "https://yourapp.com/webhooks/paypulse",
+    "events": ["invoice.paid", "subscription.cancelled"]
+  }'
+```
+
+## Event payload
+
+Every webhook delivery includes:
+
+| Header | Description |
+|--------|-------------|
+| `X-Signature` | HMAC-SHA256 signature of the body |
+| `X-Webhook-Id` | Unique delivery ID |
+| `X-Timestamp` | Unix timestamp of delivery |
+
+### Body example
+
+```json
+{
+  "event": "invoice.paid",
+  "data": {
+    "id": "inv_xxxx",
+    "amount": 25000,
+    "currency": "NGN",
+    "customer_email": "ade@techcorp.ng",
+    "status": "PAID",
+    "paid_at": "2026-01-15T10:30:05Z"
+  },
+  "created_at": "2026-01-15T10:30:05Z"
+}
+```
+
+## Verifying signatures
+
+Always verify the `X-Signature` header to ensure the webhook came from PayPulse:
+
+```python
+import hmac
+import hashlib
+
+def verify_webhook(payload: bytes, signature: str, secret: str) -> bool:
+    expected = hmac.new(
+        secret.encode(), payload, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature)
+```
+
+```javascript
+const crypto = require('crypto');
+
+function verifyWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
+```
+
+## Retry policy
+
+Failed deliveries (non-2xx response or timeout) are retried up to **5 times** with exponential backoff:
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 1 minute |
+| 3 | 5 minutes |
+| 4 | 30 minutes |
+| 5 | 2 hours |
+
+After 5 failed attempts, the delivery is marked as `FAILED` and appears in your webhook delivery logs.
+
+## Testing webhooks
+
+Use the test endpoint to send a mock event:
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/webhooks/test \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -d '{
+    "webhook_id": "your-webhook-id",
+    "event": "invoice.paid"
+  }'
+```

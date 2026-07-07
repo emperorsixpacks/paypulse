@@ -1,0 +1,55 @@
+---
+title: Introduction
+description: API documentation for PayPulse — subscription billing and revenue operations.
+---
+
+## Welcome to PayPulse
+
+PayPulse is a subscription billing platform that handles invoicing, dunning, usage-based pricing, and secure payments.
+
+**Base URL:** `https://api.paypulse.app/api/v1`
+
+<CardGroup>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    Get your first API call running in 2 minutes.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how to authenticate with API keys and JWT tokens.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/auth">
+    Full reference for every endpoint.
+  </Card>
+</CardGroup>
+
+## Core concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Merchant** | Your business account. Owns projects and API keys. |
+| **Project** | A logical grouping for plans, customers, and subscriptions. |
+| **Plan** | A pricing configuration — fixed or metered billing. |
+| **Subscription** | A customer's active enrollment in a plan. |
+| **Invoice** | A billing record generated each period. |
+| **Checkout Session** | A hosted payment page for customers to subscribe. |
+
+## Authentication
+
+All API requests require either:
+
+- **API key** — passed as `X-Api-Key` header. Scopes to a project.
+- **JWT token** — passed as `Authorization: Bearer <token>`. Used for merchant management routes.
+
+Some endpoints accept both (dual-auth). See [Authentication](/authentication) for details.
+
+## Rate limits
+
+- **100 requests/second** per API key
+- **1000 requests/minute** per merchant
+
+Rate limit headers are included in every response:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 97
+X-RateLimit-Reset: 1690000000
+```

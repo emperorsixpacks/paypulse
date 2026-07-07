@@ -1,0 +1,56 @@
+---
+title: "Cancellation Policies"
+description: "Configure refund rules for FIXED billing plan cancellations."
+openapi: "/openapi.json" "GET /api/v1/cancellation-policies" "POST /api/v1/cancellation-policies" "GET /api/v1/cancellation-policies/{policy_id}" "PATCH /api/v1/cancellation-policies/{policy_id}" "DELETE /api/v1/cancellation-policies/{policy_id}"
+---
+
+<ParamField header="X-Api-Key" type="string" required>
+  Your API key.
+</ParamField>
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token.
+</ParamField>
+
+Cancellation policies define how refunds are calculated when a customer cancels a **FIXED** billing plan. METERED plans do not support refunds.
+
+### Refund types
+
+| Type | Behavior |
+|------|----------|
+| `none` | No refund on cancellation |
+| `full` | Full refund if cancelled within `refund_window_days` |
+| `percentage` | Fixed percentage of the plan amount refunded |
+| `prorate` | Refund proportional to remaining time in the period |
+
+### Example: Prorated policy
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/cancellation-policies \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -d '{
+    "name": "Standard Refund",
+    "refund_type": "prorate",
+    "prorate_refund": true,
+    "is_default": true
+  }'
+```
+</CodeGroup>
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Standard Refund",
+  "refund_type": "prorate",
+  "refund_percentage": null,
+  "refund_window_days": 0,
+  "prorate_refund": true,
+  "cancellation_fee": 0,
+  "apply_to_existing": true,
+  "is_default": true,
+  "created_at": "550e8400-e29b-41d4-a716-446655440000"
+}
+```

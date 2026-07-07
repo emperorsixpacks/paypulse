@@ -1,0 +1,52 @@
+---
+title: "Invoices"
+description: "List and retrieve invoices with refund status."
+openapi: "/openapi.json" "GET /api/v1/invoices" "GET /api/v1/invoices/{invoice_id}"
+---
+
+<ParamField header="X-Api-Key" type="string" required>
+  Your API key.
+</ParamField>
+
+### Invoice statuses
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Awaiting payment |
+| `PAID` | Payment received |
+| `FAILED` | Payment attempt failed |
+| `VOID` | Invoice cancelled |
+
+### Refund statuses
+
+| Status | Description |
+|--------|-------------|
+| `NONE` | No refund applicable |
+| `PENDING` | Refund initiated, awaiting processing |
+| `PROCESSED` | Refund completed |
+| `FAILED` | Refund attempt failed |
+
+<CodeGroup>
+```bash cURL
+curl https://api.paypulse.app/api/v1/invoices \
+  -H "X-Api-Key: pp_test_xxxx"
+```
+</CodeGroup>
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "customer_email": "ade@techcorp.ng",
+    "amount": 25000,
+    "currency": "NGN",
+    "status": "PAID",
+    "due_date": "2026-01-15T10:30:00Z",
+    "paid_at": "2026-01-15T10:30:05Z",
+    "refund_amount": 0,
+    "refund_status": "NONE",
+    "refund_reason": null,
+    "created_at": "2026-01-15T10:30:00Z"
+  }
+]
+```

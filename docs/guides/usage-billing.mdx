@@ -1,0 +1,67 @@
+---
+title: "Usage-based billing"
+description: "How to set up and use metered billing with PayPulse."
+---
+
+## Overview
+
+Usage-based (metered) billing lets you charge customers based on actual consumption — API calls, seats, storage, or any unit you define.
+
+## 1. Create a metered plan
+
+Set `billing_type` to `METERED` and define `price_per_unit`:
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/plans \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "name": "API Usage",
+    "price_per_unit": 0.01,
+    "unit_label": "API call",
+    "currency": "NGN",
+    "interval": "MONTHLY"
+  }'
+```
+
+## 2. Report usage
+
+As your customers consume units, report them via the API:
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/subscriptions/{sub_id}/usage \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "quantity": 15000,
+    "description": "January API calls",
+    "idempotency_key": "usage_2026_01_api_calls"
+  }'
+```
+
+<Note>
+Usage records are append-only. The same `idempotency_key` will not be recorded twice.
+</Note>
+
+## 3. Check current usage
+
+See what's unbilled for the current period:
+
+```bash
+curl https://api.paypulse.app/api/v1/subscriptions/{sub_id}/usage \
+  -H "X-Api-Key: pp_test_xxxx"
+```
+
+## 4. Billing
+
+At the end of each billing period, the ARQ worker automatically:
+1. Sums all unbilled usage records
+2. Creates an invoice for `total_quantity × price_per_unit`
+3. Attempts to charge the customer
+4. Marks the usage records as billed
+
+## Idempotency
+
+Each usage report requires a unique `idempotency_key`. If you send the same key twice, the second request returns `created: false` without duplicating the record.
+
+Best practice: use a deterministic key like `{subscription_id}_{date}_{event_type}`.

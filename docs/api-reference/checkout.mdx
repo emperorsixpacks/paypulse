@@ -1,0 +1,70 @@
+---
+title: "Checkout"
+description: "Create and manage hosted checkout sessions."
+openapi: "/openapi.json" "POST /api/v1/checkout/sessions" "GET /api/v1/checkout/sessions" "GET /api/v1/checkout/sessions/{code}" "DELETE /api/v1/checkout/sessions/{code}"
+---
+
+<ParamField header="X-Api-Key" type="string" required>
+  Your API key.
+</ParamField>
+
+## Create checkout session
+
+<ParamField body="plan_id" type="string" required>
+  UUID of the plan to subscribe to.
+</ParamField>
+
+<ParamField body="success_url" type="string" required>
+  URL to redirect after successful payment.
+</ParamField>
+
+<ParamField body="cancel_url" type="string" required>
+  URL to redirect if payment is cancelled.
+</ParamField>
+
+<ParamField body="customer_email" type="string">
+  Pre-fill the customer's email.
+</ParamField>
+
+<ParamField body="customer_name" type="string">
+  Pre-fill the customer's name.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary data passed through to webhooks.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/checkout/sessions \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "plan_id": "550e8400-e29b-41d4-a716-446655440000",
+    "success_url": "https://yourapp.com/success",
+    "cancel_url": "https://yourapp.com/cancel",
+    "customer_email": "ade@techcorp.ng"
+  }'
+```
+</CodeGroup>
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "code": "chk_abc123xyz",
+  "checkout_url": "https://checkout.paypulse.app/chk_abc123xyz",
+  "status": "PENDING",
+  "expires_at": "2026-01-16T10:30:00Z",
+  "plan_id": "550e8400-e29b-41d4-a716-446655440000",
+  "created_at": "2026-01-15T10:30:00Z"
+}
+```
+
+### Checkout statuses
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Awaiting customer payment |
+| `COMPLETED` | Payment successful |
+| `EXPIRED` | Session expired (24h TTL) |
+| `CANCELLED` | Cancelled by merchant |

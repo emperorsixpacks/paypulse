@@ -1,0 +1,72 @@
+---
+title: Authentication
+description: How to authenticate with API keys and JWT tokens.
+---
+
+PayPulse uses two authentication methods depending on the endpoint.
+
+## API Key authentication
+
+Pass your API key in the `X-Api-Key` header:
+
+```bash
+curl https://api.paypulse.app/api/v1/plans \
+  -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+API keys are project-scoped. Each key belongs to one project and grants access to that project's data (plans, customers, subscriptions, invoices, etc.).
+
+### Key formats
+
+| Prefix | Environment | Usage |
+|--------|-------------|-------|
+| `pp_test_` | Test | Development and testing |
+| `pp_live_` | Production | Live transactions |
+
+<Warning>
+Test keys never process real payments. Always use test keys during development.
+</Warning>
+
+## JWT authentication
+
+Some endpoints (merchant management, API key creation) require a JWT token:
+
+```bash
+curl https://api.paypulse.app/api/v1/merchants/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+
+Get a token via the [login](/api-reference/auth#login) endpoint.
+
+## Dual-auth endpoints
+
+Some endpoints accept **both** API key and JWT. These routes tie a project to a merchant for additional security:
+
+| Endpoint | Auth method |
+|----------|-------------|
+| `POST /webhooks` | API key + JWT |
+| `GET /webhooks` | API key + JWT |
+| `DELETE /webhooks/{id}` | API key + JWT |
+| `POST /cancellation-policies` | API key + JWT |
+| `GET /cancellation-policies` | API key + JWT |
+
+For these, pass both headers:
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/webhooks \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -H "Authorization: Bearer eyJhbGci..."
+```
+
+## Error responses
+
+| Status | Meaning |
+|--------|---------|
+| `401` | Missing or invalid authentication |
+| `403` | Key is inactive or lacks access to the resource |
+
+```json
+{
+  "detail": "Invalid API key"
+}
+```

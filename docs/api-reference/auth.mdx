@@ -1,0 +1,114 @@
+---
+title: "Auth"
+description: "Register, login, and manage your merchant account."
+openapi: "/openapi.json"
+---
+
+## Register
+
+<ParamField body="email" type="string" required>
+  Your email address.
+</ParamField>
+
+<ParamField body="business_name" type="string" required>
+  Your business or company name.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Password (minimum 8 characters).
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "you@company.com",
+    "business_name": "Acme Inc",
+    "password": "securepassword123"
+  }'
+```
+</CodeGroup>
+
+<Expandable title="Response">
+<ResponseField name="id" type="string">Merchant UUID</ResponseField>
+<ResponseField name="email" type="string">Registered email</ResponseField>
+<ResponseField name="business_name" type="string">Business name</ResponseField>
+<ResponseField name="access_token" type="string">JWT access token</ResponseField>
+<ResponseField name="api_keys" type="array">Initial API keys (test + live)</ResponseField>
+<ResponseField name="created_at" type="string">ISO 8601 timestamp</ResponseField>
+</Expandable>
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "you@company.com",
+  "business_name": "Acme Inc",
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "api_keys": [
+    {
+      "id": "...",
+      "name": "Test Key",
+      "key": "pp_test_xxxxxxxxxxxx",
+      "key_prefix": "pp_test_",
+      "is_live": false
+    }
+  ],
+  "created_at": "2026-01-15T10:30:00Z"
+}
+```
+
+---
+
+## Login
+
+<ParamField body="email" type="string" required>
+  Your registered email.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Your password.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "you@company.com",
+    "password": "securepassword123"
+  }'
+```
+</CodeGroup>
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer"
+}
+```
+
+---
+
+## Get current merchant
+
+<ParamField header="Authorization" type="string" required>
+  Bearer token from login.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl https://api.paypulse.app/api/v1/auth/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
+```
+</CodeGroup>
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "email": "you@company.com",
+  "business_name": "Acme Inc",
+  "is_active": true,
+  "is_verified": false
+}
+```

@@ -1,0 +1,113 @@
+---
+title: "Plans"
+description: "Create and manage subscription plans."
+openapi: "/openapi.json" "GET /api/v1/plans" "POST /api/v1/plans" "GET /api/v1/plans/{plan_id}" "PATCH /api/v1/plans/{plan_id}" "DELETE /api/v1/plans/{plan_id}"
+---
+
+<ParamField header="X-Api-Key" type="string" required>
+  Your API key.
+</ParamField>
+
+## Create plan
+
+<ParamField body="name" type="string" required>
+  Plan name displayed to customers.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Amount charged per interval.
+</ParamField>
+
+<ParamField body="currency" type="string" default="NGN">
+  ISO 4217 currency code.
+</ParamField>
+
+<ParamField body="interval" type="string" required>
+  Billing interval: `DAILY`, `WEEKLY`, `MONTHLY`, or `YEARLY`.
+</ParamField>
+
+<ParamField body="interval_count" type="integer" default="1">
+  Number of intervals between charges.
+</ParamField>
+
+<ParamField body="trial_period_days" type="integer" default="0">
+  Free trial period in days.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.paypulse.app/api/v1/plans \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "name": "Growth",
+    "amount": 25000,
+    "currency": "NGN",
+    "interval": "MONTHLY"
+  }'
+```
+</CodeGroup>
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Growth",
+  "amount": 25000,
+  "currency": "NGN",
+  "interval": "MONTHLY",
+  "interval_count": 1,
+  "trial_period_days": 0,
+  "is_active": true,
+  "created_at": "2026-01-15T10:30:00Z"
+}
+```
+
+---
+
+## Update plan
+
+<ParamField param="plan_id" type="string" required>
+  Plan UUID.
+</ParamField>
+
+<ParamField body="name" type="string">
+  New plan name.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  New amount.
+</ParamField>
+
+<ParamField body="is_active" type="boolean">
+  Activate or deactivate the plan.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH https://api.paypulse.app/api/v1/plans/{plan_id} \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -d '{
+    "amount": 30000
+  }'
+```
+</CodeGroup>
+
+---
+
+## Delete plan
+
+Deactivates the plan (soft delete). Existing subscriptions remain active.
+
+<ParamField param="plan_id" type="string" required>
+  Plan UUID.
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.paypulse.app/api/v1/plans/{plan_id} \
+  -H "X-Api-Key: pp_test_xxxx"
+```
+</CodeGroup>
+
+Returns `204 No Content` on success.

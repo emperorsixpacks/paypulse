@@ -1,0 +1,65 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "PayPulse",
+  "logo": {
+    "dark": "/logo-dark.svg",
+    "light": "/logo.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#2E4CFF",
+    "light": "#D6FA5C",
+    "dark": "#0E1116",
+    "anchors": {
+      "from": "#2E4CFF",
+      "to": "#D6FA5C"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://dashboard.paypulse.app"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Start Free Trial",
+    "url": "https://paypulse.app/register"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    },
+    {
+      "name": "Guides",
+      "url": "guides"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["introduction", "quickstart", "authentication"]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/auth",
+        "api-reference/plans",
+        "api-reference/customers",
+        "api-reference/subscriptions",
+        "api-reference/invoices",
+        "api-reference/checkout",
+        "api-reference/webhooks",
+        "api-reference/cancellation-policies"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": ["guides/usage-billing", "guides/webhooks", "guides/cancellation-policies"]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/paypulse",
+    "github": "https://github.com/paypulse"
+  }
+}

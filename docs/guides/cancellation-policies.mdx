@@ -1,0 +1,64 @@
+---
+title: "Cancellation policies"
+description: "Configure refund rules for subscription cancellations."
+---
+
+## How cancellation refunds work
+
+When a customer cancels a subscription with a **FIXED** billing plan, PayPulse calculates a refund based on your configured cancellation policy.
+
+<Note>
+METERED billing plans do not support refunds — usage is billed as consumed and cannot be prorated.
+</Note>
+
+## Refund types
+
+### No refund (`none`)
+Cancellation takes effect immediately. No money is returned.
+
+### Full refund (`full`)
+The customer receives a full refund if they cancel within `refund_window_days` of the billing period start. After that window, no refund.
+
+### Percentage refund (`percentage`)
+A fixed percentage of the plan amount is refunded, regardless of timing.
+
+**Example:** Plan costs ₦25,000/month, policy is 50% → customer gets ₦12,500 back.
+
+### Prorated refund (`prorate`)
+Refund is proportional to the remaining time in the current billing period.
+
+**Example:** Plan costs ₦25,000/month, customer cancels 10 days into a 30-day period:
+- Remaining ratio: 20/30 = 0.667
+- Refund: ₦25,000 × 0.667 = ₦16,666.67
+
+## Cancellation fees
+
+A `cancellation_fee` is deducted from the refund amount. This lets you cover administrative costs while still offering partial refunds.
+
+**Example:** Prorated refund ₦16,666.67 with ₦1,000 fee → customer gets ₦15,666.67.
+
+## Setting a default policy
+
+Each project can have one default policy. When a subscription is cancelled and no specific policy is assigned, the default is used.
+
+```bash
+curl -X POST https://api.paypulse.app/api/v1/cancellation-policies \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: pp_test_xxxx" \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -d '{
+    "name": "Standard Refund",
+    "refund_type": "prorate",
+    "prorate_refund": true,
+    "is_default": true
+  }'
+```
+
+## Common configurations
+
+| Use case | refund_type | refund_window_days | prorate_refund | cancellation_fee |
+|----------|-------------|-------------------|----------------|-----------------|
+| No refunds | `none` | — | — | — |
+| 30-day money back | `full` | 30 | — | — |
+| 50% refund | `percentage` | — | — | 0 |
+| Prorated with fee | `prorate` | — | true | 1000 |
