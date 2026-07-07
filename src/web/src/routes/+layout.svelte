@@ -15,20 +15,20 @@
 
 	<!-- Open Graph -->
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://paypulse.app" />
+	<meta property="og:url" content="https://paypulse.ng" />
 	<meta property="og:title" content="PayPulse — Billing that keeps up with you." />
 	<meta property="og:description" content="Automated invoicing, smart dunning, usage-based pricing and secure payouts — the full revenue stack behind subscriptions that just work." />
-	<meta property="og:image" content="https://paypulse.app/og-image.png" />
+	<meta property="og:image" content="https://paypulse.ng/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta property="og:site_name" content="PayPulse" />
 
 	<!-- Twitter / X -->
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:url" content="https://paypulse.app" />
+	<meta name="twitter:url" content="https://paypulse.ng" />
 	<meta name="twitter:title" content="PayPulse — Billing that keeps up with you." />
 	<meta name="twitter:description" content="Automated invoicing, smart dunning, usage-based pricing and secure payouts — the full revenue stack behind subscriptions that just work." />
-	<meta name="twitter:image" content="https://paypulse.app/og-image.png" />
+	<meta name="twitter:image" content="https://paypulse.ng/og-image.png" />
 
 	<meta name="application-name" content="PayPulse" />
 	<meta name="theme-color" content="#2E4CFF" />

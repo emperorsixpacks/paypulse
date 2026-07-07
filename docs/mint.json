@@ -1,6 +1,7 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "PayPulse",
+  "url": "https://docs.mintlify.site",
   "logo": {
     "dark": "/logo-dark.svg",
     "light": "/logo.svg"
@@ -18,12 +19,12 @@
   "topbarLinks": [
     {
       "name": "Dashboard",
-      "url": "https://dashboard.paypulse.app"
+      "url": "https://dashboard.paypulse.ng"
     }
   ],
   "topbarCtaButton": {
     "name": "Start Free Trial",
-    "url": "https://paypulse.app/register"
+    "url": "https://paypulse.ng/register"
   },
   "tabs": [
     {
@@ -61,5 +62,8 @@
   "footerSocials": {
     "twitter": "https://twitter.com/paypulse",
     "github": "https://github.com/paypulse"
+  },
+  "modeToggle": {
+    "default": "dark"
   }
 }
