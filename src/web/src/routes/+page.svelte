@@ -98,9 +98,8 @@
 <!-- NAV -->
 <nav class="nav">
 	<div class="wrap">
-		<a class="brand" href="#top">
-			<span class="pulse-dot" aria-hidden="true"></span>
-			PayPulse
+		<a class="brand" href="#top" aria-label="PayPulse home">
+			<img src="/logo.svg" alt="PayPulse" height="40" width="160" />
 		</a>
 		<div class="navlinks">
 			<a href="#features">Features</a>
@@ -255,10 +254,9 @@
 	<div class="wrap">
 		<div class="foot-grid">
 			<div class="foot-brand">
-				<a class="brand" href="#top">
-					<span class="pulse-dot" aria-hidden="true"></span>
-					PayPulse
-				</a>
+			<a class="brand" href="#top" aria-label="PayPulse home">
+				<img src="/logo.svg" alt="PayPulse" height="40" width="160" />
+			</a>
 				<p>Subscription billing and revenue operations for teams that get paid on a schedule.</p>
 			</div>
 			<div class="foot-col">
