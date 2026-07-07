@@ -29,7 +29,7 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
+  api:
     build: .
     restart: unless-stopped
     ports:
@@ -43,6 +43,24 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
+
+  web:
+    build: ./src/web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  dashboard:
+    build: ./src/dashboard
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
 
 volumes:
   pgdata:
