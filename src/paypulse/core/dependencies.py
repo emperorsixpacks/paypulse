@@ -46,3 +46,24 @@ async def get_project_from_api_key(
     if project is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
     return project
+
+
+async def get_project_with_merchant(
+    x_api_key: str = Header(...),
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> Project:
+    api_key_repo = ApiKeyRepository(db)
+    project = await api_key_repo.verify_key(x_api_key)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+
+    payload = decode_access_token(token)
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    merchant_id = payload.get("sub")
+    if merchant_id is None or str(project.merchant_id) != merchant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this project")
+
+    return project
