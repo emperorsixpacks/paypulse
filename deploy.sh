@@ -39,6 +39,13 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
+# Stop system nginx if running (docker nginx takes over)
+if systemctl is-active --quiet nginx 2>/dev/null; then
+    echo "  Stopping system nginx..."
+    systemctl stop nginx
+    systemctl disable nginx
+fi
+
 # --- 5. Clone repo ---
 echo "[5/7] Cloning repository..."
 if [ ! -d "/opt/paypulse" ]; then
