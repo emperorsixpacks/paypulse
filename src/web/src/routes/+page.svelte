@@ -104,7 +104,7 @@
 		<div class="navlinks">
 			<a href="#features">Features</a>
 			<a href="#pricing">Pricing</a>
-			<a href="https://docs.mintlify.site/introduction">Docs</a>
+			<a href="https://docs.paypulse.cv/introduction">Docs</a>
 			<a href="#contact">Contact</a>
 		</div>
 		<div class="navcta">
@@ -125,7 +125,7 @@
 			<p class="sub">Automated invoicing, smart dunning, usage-based pricing and secure payouts — the full revenue stack behind subscriptions that just work.</p>
 			<div class="cta-row">
 				<a class="btn btn-primary" href="/register">Start free trial</a>
-				<a class="btn btn-ghost" href="https://docs.mintlify.site/introduction">Read the docs →</a>
+				<a class="btn btn-ghost" href="https://docs.paypulse.cv/introduction">Read the docs →</a>
 			</div>
 			<p class="fine">No card required · Free for your first 50 customers</p>
 			<div class="live-stat">
@@ -263,7 +263,7 @@
 				<h4>Product</h4>
 				<a href="#features">Features</a>
 				<a href="#pricing">Pricing</a>
-				<a href="https://docs.mintlify.site/introduction">API docs</a>
+				<a href="https://docs.paypulse.cv/introduction">API docs</a>
 				<a href="#">Status</a>
 			</div>
 			<div class="foot-col">

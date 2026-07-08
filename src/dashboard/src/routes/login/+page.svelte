@@ -79,7 +79,7 @@
 
 			<p class="text-[13px] text-slate text-center mt-4">
 				Don't have an account?
-				<a href="https://paypulse.ng/register" class="text-cobalt hover:text-cobalt-dim font-medium">Create one</a>
+				<a href="https://paypulse.cv/register" class="text-cobalt hover:text-cobalt-dim font-medium">Create one</a>
 			</p>
 		</div>
 	</div>
