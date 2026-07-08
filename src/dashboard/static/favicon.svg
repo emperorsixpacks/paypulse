@@ -1,0 +1,7 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PayPulse logo mark">
+  <rect x="2" y="2" width="60" height="60" rx="18" fill="#2E4CFF"/>
+  <path d="M10 34 H21 L26.5 21 L33.5 47 L39 34 H54"
+        fill="none" stroke="#FFFFFF" stroke-width="4.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="39" cy="34" r="3.4" fill="#D6FA5C"/>
+</svg>
