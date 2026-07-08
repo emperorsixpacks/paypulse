@@ -17,7 +17,7 @@ echo "============================================"
 # --- 1. System packages ---
 echo "[1/7] Installing system packages..."
 apt-get update
-apt-get install -y curl git ufw nginx certbot python3-certbot-nginx
+apt-get install -y curl git ufw
 
 # --- 2. Docker ---
 echo "[2/7] Installing Docker..."
@@ -39,7 +39,7 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
 
-# Stop system nginx if running (docker nginx takes over)
+# Stop system nginx if running (docker nginx takes over port 80/443)
 if systemctl is-active --quiet nginx 2>/dev/null; then
     echo "  Stopping system nginx..."
     systemctl stop nginx
@@ -70,12 +70,27 @@ if grep -q "CHANGE_ME_TO_RANDOM_64_CHARS" config/.env.production; then
     echo "  Generated JWT_SECRET_KEY"
 fi
 
-# --- 7. Start services ---
+# --- 7. Start services (HTTP only first) ---
 echo "[7/7] Starting services..."
 
-# Temp nginx config for certbot
+# Copy HTTP-only nginx config as the active config
 cp nginx/default.conf nginx/active.conf
+
+# Build and start
 docker compose -f docker-compose.prod.yml up -d --build
+
+echo ""
+echo "Services started. Waiting for nginx to be ready..."
+sleep 5
+
+# Verify HTTP is working
+echo "Testing HTTP connectivity..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null || echo "000")
+if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ]; then
+    echo "  HTTP OK (status: $HTTP_CODE)"
+else
+    echo "  WARNING: HTTP returned status $HTTP_CODE — check 'docker compose -f docker-compose.prod.yml logs nginx'"
+fi
 
 # --- 8. SSL certificates ---
 echo ""
@@ -83,36 +98,64 @@ echo "============================================"
 echo "  SSL Certificate Setup"
 echo "============================================"
 echo ""
-echo "DNS must point to this VPS IP first!"
-echo "  $DOMAIN_API  -> $(curl -s ifconfig.me)"
-echo "  $DOMAIN_DASH -> $(curl -s ifconfig.me)"
+echo "  VPS IP: $(curl -s ifconfig.me)"
+echo ""
+echo "  Make sure DNS is set up:"
+echo "    $DOMAIN_API      -> $(curl -s ifconfig.me)"
+echo "    $DOMAIN_DASH     -> $(curl -s ifconfig.me)"
 echo ""
 
 read -p "Have DNS records propagated? (y/n): " DNS_READY
 if [ "$DNS_READY" = "y" ]; then
     echo "Requesting SSL certificates..."
-    docker compose -f docker-compose.prod.yml run --rm certbot certonly \
-        --webroot --webroot-path=/var/lib/letsencrypt \
-        -d $DOMAIN_API -d $DOMAIN_DASH \
-        --email admin@paypulse.cv --agree-tos --no-eff-email
 
-    # Switch to SSL nginx config
-    cp nginx/api.conf nginx/active_api.conf
-    cp nginx/dashboard.conf nginx/active_dashboard.conf
-    docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
-    echo "SSL certificates installed!"
+    # Run certbot with webroot method
+    docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+        --webroot \
+        --webroot-path=/var/lib/letsencrypt \
+        -d "$DOMAIN_API" \
+        -d "$DOMAIN_DASH" \
+        --email "admin@paypulse.cv" \
+        --agree-tos \
+        --no-eff-email \
+        --force-renewal
+
+    # Check if certs were created
+    if docker compose -f docker-compose.prod.yml run --rm certbot ls /etc/letsencrypt/live/ 2>/dev/null | grep -q "$DOMAIN_API"; then
+        echo "SSL certificates issued successfully!"
+
+        # Switch to SSL config
+        cp nginx/ssl.conf nginx/active.conf
+
+        # Reload nginx
+        docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
+        echo "Nginx reloaded with SSL!"
+    else
+        echo ""
+        echo "ERROR: Certbot did not create certificates."
+        echo "Check the logs: docker compose -f docker-compose.prod.yml logs certbot"
+        echo ""
+        echo "After fixing, run certbot manually:"
+        echo "  docker compose -f docker-compose.prod.yml run --rm certbot certonly \\"
+        echo "    --webroot --webroot-path=/var/lib/letsencrypt \\"
+        echo "    -d $DOMAIN_API -d $DOMAIN_DASH \\"
+        echo "    --email admin@paypulse.cv --agree-tos --no-eff-email"
+        echo ""
+        echo "Then switch to SSL:"
+        echo "  cp nginx/ssl.conf nginx/active.conf"
+        echo "  docker compose -f docker-compose.prod.yml exec nginx nginx -s reload"
+    fi
 else
     echo ""
-    echo "Run this after DNS propagates:"
+    echo "After DNS propagates, run:"
+    echo ""
     echo "  cd /opt/paypulse"
     echo "  docker compose -f docker-compose.prod.yml run --rm certbot certonly \\"
     echo "    --webroot --webroot-path=/var/lib/letsencrypt \\"
     echo "    -d $DOMAIN_API -d $DOMAIN_DASH \\"
     echo "    --email admin@paypulse.cv --agree-tos --no-eff-email"
     echo ""
-    echo "Then copy SSL configs:"
-    echo "  cp nginx/api.conf nginx/active_api.conf"
-    echo "  cp nginx/dashboard.conf nginx/active_dashboard.conf"
+    echo "  cp nginx/ssl.conf nginx/active.conf"
     echo "  docker compose -f docker-compose.prod.yml exec nginx nginx -s reload"
 fi
 
