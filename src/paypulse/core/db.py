@@ -7,7 +7,13 @@ from src.paypulse.core.settings import settings
 
 logger = get_logger(__name__)
 
-_engine = create_async_engine(settings.get_database_url(), echo=settings.DEBUG)
+_engine = create_async_engine(
+    settings.get_database_url(),
+    echo=settings.DEBUG,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args={"timeout": 10},
+)
 _async_session = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
 
 
