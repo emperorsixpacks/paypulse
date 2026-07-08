@@ -10,7 +10,7 @@ PayPulse uses two authentication methods depending on the endpoint.
 Pass your API key in the `X-Api-Key` header:
 
 ```bash
-curl https://api.paypulse.app/api/v1/plans \
+curl https://api.paypulse.cv/api/v1/plans \
   -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
@@ -32,7 +32,7 @@ Test keys never process real payments. Always use test keys during development.
 Some endpoints (merchant management, API key creation) require a JWT token:
 
 ```bash
-curl https://api.paypulse.app/api/v1/merchants/me \
+curl https://api.paypulse.cv/api/v1/merchants/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
 ```
 
@@ -53,7 +53,7 @@ Some endpoints accept **both** API key and JWT. These routes tie a project to a 
 For these, pass both headers:
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/webhooks \
+curl -X POST https://api.paypulse.cv/api/v1/webhooks \
   -H "X-Api-Key: pp_test_xxxx" \
   -H "Authorization: Bearer eyJhbGci..."
 ```

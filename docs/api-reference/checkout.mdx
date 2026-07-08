@@ -36,7 +36,7 @@ openapi: "/openapi.json" "POST /api/v1/checkout/sessions" "GET /api/v1/checkout/
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.paypulse.app/api/v1/checkout/sessions \
+curl -X POST https://api.paypulse.cv/api/v1/checkout/sessions \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{
@@ -52,7 +52,7 @@ curl -X POST https://api.paypulse.app/api/v1/checkout/sessions \
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "code": "chk_abc123xyz",
-  "checkout_url": "https://checkout.paypulse.app/chk_abc123xyz",
+  "checkout_url": "https://checkout.paypulse.cv/chk_abc123xyz",
   "status": "PENDING",
   "expires_at": "2026-01-16T10:30:00Z",
   "plan_id": "550e8400-e29b-41d4-a716-446655440000",

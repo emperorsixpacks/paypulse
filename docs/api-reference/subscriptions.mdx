@@ -22,7 +22,7 @@ For **FIXED** billing plans, immediate cancellation triggers a refund based on y
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.paypulse.app/api/v1/subscriptions/{subscription_id}/cancel \
+curl -X POST https://api.paypulse.cv/api/v1/subscriptions/{subscription_id}/cancel \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{
@@ -77,7 +77,7 @@ For metered plans. Append a usage record.
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.paypulse.app/api/v1/subscriptions/{subscription_id}/usage \
+curl -X POST https://api.paypulse.cv/api/v1/subscriptions/{subscription_id}/usage \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{

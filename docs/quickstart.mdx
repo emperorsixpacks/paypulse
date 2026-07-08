@@ -6,7 +6,7 @@ description: Get your first API call running in 2 minutes.
 ## 1. Register an account
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/auth/register \
+curl -X POST https://api.paypulse.cv/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "you@company.com",
@@ -30,7 +30,7 @@ pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ## 3. Create a plan
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/plans \
+curl -X POST https://api.paypulse.cv/api/v1/plans \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
   -d '{
@@ -45,7 +45,7 @@ curl -X POST https://api.paypulse.app/api/v1/plans \
 ## 4. Create a checkout session
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/checkout/sessions \
+curl -X POST https://api.paypulse.cv/api/v1/checkout/sessions \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
   -d '{
@@ -62,7 +62,7 @@ The response includes a `checkout_url` — redirect your customer there to compl
 Once payment completes, the customer has an active subscription. List it:
 
 ```bash
-curl https://api.paypulse.app/api/v1/subscriptions \
+curl https://api.paypulse.cv/api/v1/subscriptions \
   -H "X-Api-Key: pp_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 

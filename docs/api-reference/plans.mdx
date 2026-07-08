@@ -36,7 +36,7 @@ openapi: "/openapi.json" "GET /api/v1/plans" "POST /api/v1/plans" "GET /api/v1/p
 
 <CodeGroup>
 ```bash cURL
-curl -X POST https://api.paypulse.app/api/v1/plans \
+curl -X POST https://api.paypulse.cv/api/v1/plans \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{
@@ -84,7 +84,7 @@ curl -X POST https://api.paypulse.app/api/v1/plans \
 
 <CodeGroup>
 ```bash cURL
-curl -X PATCH https://api.paypulse.app/api/v1/plans/{plan_id} \
+curl -X PATCH https://api.paypulse.cv/api/v1/plans/{plan_id} \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{
@@ -105,7 +105,7 @@ Deactivates the plan (soft delete). Existing subscriptions remain active.
 
 <CodeGroup>
 ```bash cURL
-curl -X DELETE https://api.paypulse.app/api/v1/plans/{plan_id} \
+curl -X DELETE https://api.paypulse.cv/api/v1/plans/{plan_id} \
   -H "X-Api-Key: pp_test_xxxx"
 ```
 </CodeGroup>

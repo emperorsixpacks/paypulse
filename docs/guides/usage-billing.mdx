@@ -12,7 +12,7 @@ Usage-based (metered) billing lets you charge customers based on actual consumpt
 Set `billing_type` to `METERED` and define `price_per_unit`:
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/plans \
+curl -X POST https://api.paypulse.cv/api/v1/plans \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{
@@ -29,7 +29,7 @@ curl -X POST https://api.paypulse.app/api/v1/plans \
 As your customers consume units, report them via the API:
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/subscriptions/{sub_id}/usage \
+curl -X POST https://api.paypulse.cv/api/v1/subscriptions/{sub_id}/usage \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -d '{
@@ -48,7 +48,7 @@ Usage records are append-only. The same `idempotency_key` will not be recorded t
 See what's unbilled for the current period:
 
 ```bash
-curl https://api.paypulse.app/api/v1/subscriptions/{sub_id}/usage \
+curl https://api.paypulse.cv/api/v1/subscriptions/{sub_id}/usage \
   -H "X-Api-Key: pp_test_xxxx"
 ```
 

@@ -19,13 +19,13 @@
     "links": [
       {
         "label": "Dashboard",
-        "href": "https://dashboard.paypulse.ng"
+        "href": "https://dashboard.paypulse.cv"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Start Free Trial",
-      "href": "https://paypulse.ng/register"
+      "href": "https://paypulse.cv/register"
     }
   },
   "footer": {

@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "PayPulse",
-  "url": "https://docs.mintlify.site",
+  "url": "https://docs.paypulse.cv",
   "logo": {
     "dark": "/logo-dark.svg",
     "light": "/logo.svg"
@@ -19,12 +19,12 @@
   "topbarLinks": [
     {
       "name": "Dashboard",
-      "url": "https://dashboard.paypulse.ng"
+      "url": "https://dashboard.paypulse.cv"
     }
   ],
   "topbarCtaButton": {
     "name": "Start Free Trial",
-    "url": "https://paypulse.ng/register"
+    "url": "https://paypulse.cv/register"
   },
   "tabs": [
     {

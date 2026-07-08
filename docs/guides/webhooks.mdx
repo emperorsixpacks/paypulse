@@ -8,7 +8,7 @@ description: "How to receive and verify webhook events from PayPulse."
 Register an HTTPS endpoint to receive events:
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/webhooks \
+curl -X POST https://api.paypulse.cv/api/v1/webhooks \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: pp_test_xxxx" \
   -H "Authorization: Bearer eyJhbGci..." \
@@ -94,7 +94,7 @@ After 5 failed attempts, the delivery is marked as `FAILED` and appears in your 
 Use the test endpoint to send a mock event:
 
 ```bash
-curl -X POST https://api.paypulse.app/api/v1/webhooks/test \
+curl -X POST https://api.paypulse.cv/api/v1/webhooks/test \
   -H "X-Api-Key: pp_test_xxxx" \
   -H "Authorization: Bearer eyJhbGci..." \
   -d '{
