@@ -1,20 +1,18 @@
 import secrets
 from datetime import UTC, datetime, timedelta
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from src.paypulse.core.settings import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -37,5 +35,5 @@ def decode_access_token(token: str) -> dict | None:
 def generate_api_key(is_live: bool = False) -> tuple[str, str]:
     prefix = "pp_live" if is_live else "pp_test"
     full_key = f"{prefix}_{secrets.token_urlsafe(32)}"
-    hashed = pwd_context.hash(full_key)
+    hashed = bcrypt.hashpw(full_key.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     return full_key, hashed
