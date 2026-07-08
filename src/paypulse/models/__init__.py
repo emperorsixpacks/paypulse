@@ -6,6 +6,7 @@ from src.paypulse.models.billing import (
     Subscription,
     UsageRecord,
 )
+from src.paypulse.models.cancellation import CancellationPolicy
 from src.paypulse.models.checkout import CheckoutSession
 from src.paypulse.models.customer import Customer
 from src.paypulse.models.enums import (
@@ -28,6 +29,7 @@ __all__ = [
     "BillingAttemptStatus",
     "BillingInterval",
     "BillingType",
+    "CancellationPolicy",
     "CheckoutSession",
     "CheckoutStatus",
     "Customer",

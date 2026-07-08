@@ -63,9 +63,9 @@ class MerchantService:
         projects = await self.project_repo.get_by_merchant(merchant_id)
         keys = []
         for project in projects:
-            project_with_keys = await self.project_repo.get_with_api_key(project.id)
-            if project_with_keys and project_with_keys.api_key:
-                keys.append(project_with_keys.api_key)
+            project_with_keys = await self.project_repo.get_with_api_keys(project.id)
+            if project_with_keys:
+                keys.extend(project_with_keys.api_keys)
         return keys
 
     async def generate_api_key(self, project_id: UUID, name: str, is_live: bool) -> tuple:

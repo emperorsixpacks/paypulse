@@ -28,10 +28,10 @@ class ProjectRepository(BaseRepository[Project]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_with_api_key(self, project_id: UUID) -> Project | None:
+    async def get_with_api_keys(self, project_id: UUID) -> Project | None:
         stmt = (
             select(Project)
-            .options(selectinload(Project.api_key))
+            .options(selectinload(Project.api_keys))
             .where(Project.id == project_id)
         )
         result = await self.session.execute(stmt)

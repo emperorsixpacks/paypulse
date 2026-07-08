@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.paypulse.models.enums import BillingType
+from src.paypulse.models.cancellation import CancellationPolicy
 from src.paypulse.repositories.cancellation_repository import CancellationPolicyRepository
 
 
