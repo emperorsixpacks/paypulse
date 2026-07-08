@@ -179,6 +179,110 @@ uv run alembic upgrade head
 
 ---
 
+## Deploying to a VPS
+
+Production deployment uses Docker Compose with Nginx reverse proxy and Let's Encrypt SSL.
+
+### Architecture
+
+```text
+Internet → :443 (HTTPS)
+  ├── api.paypulse.cv      → Nginx → API container (:8000)
+  └── dashboard.paypulse.cv → Nginx → Dashboard container (:3000)
+
+Redis runs locally on the VPS.
+Database is hosted externally on Neon PostgreSQL.
+```
+
+### Prerequisites
+
+- Ubuntu/Debian VPS (RackNerd, DigitalOcean, Hetzner, etc.)
+- Two DNS A records pointing to your VPS IP:
+  ```
+  api.paypulse.cv      → YOUR_VPS_IP
+  dashboard.paypulse.cv → YOUR_VPS_IP
+  ```
+- SSH root access to the VPS
+
+### Step 1: Configure Environment
+
+Edit `config/.env.production` with your real secrets:
+
+```bash
+# Generate a secure JWT secret
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+
+# Fill in these values in config/.env.production:
+#   JWT_SECRET_KEY=<generated secret>
+#   NOMBA_CLIENT_ID=<production credentials>
+#   NOMBA_CLIENT_SECRET=<production credentials>
+#   NOMBA_ACCOUNT_ID=<production credentials>
+#   RESEND_API_KEY=<your Resend API key>
+```
+
+### Step 2: Deploy
+
+```bash
+# SSH into your VPS
+ssh root@YOUR_VPS_IP
+
+# Clone the repo
+git clone https://github.com/anomalyco/paypulse.git /opt/paypulse
+cd /opt/paypulse
+
+# Run the one-script setup
+bash deploy.sh
+```
+
+The script will:
+1. Install Docker, Nginx, Certbot, UFW firewall
+2. Build and start API, Dashboard, Redis, Nginx containers
+3. Prompt to issue SSL certificates once DNS has propagated
+4. Start serving over HTTPS
+
+### Step 3: Verify
+
+```bash
+# Health check
+curl https://api.paypulse.cv/health
+
+# Dashboard
+open https://dashboard.paypulse.cv
+```
+
+### Managing Services
+
+```bash
+cd /opt/paypulse
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f api
+docker compose -f docker-compose.prod.yml logs -f dashboard
+
+# Restart all services
+docker compose -f docker-compose.prod.yml restart
+
+# Update after git pull
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+
+# Stop all services
+docker compose -f docker-compose.prod.yml down
+```
+
+### Files Added for VPS Deployment
+
+| File | Purpose |
+|---|---|
+| `docker-compose.prod.yml` | Production compose (API + Dashboard + Redis + Nginx + Certbot) |
+| `config/.env.production` | Production environment variables (gitignored) |
+| `nginx/api.conf` | Nginx reverse proxy for `api.paypulse.cv` with SSL |
+| `nginx/dashboard.conf` | Nginx reverse proxy for `dashboard.paypulse.cv` with SSL |
+| `nginx/default.conf` | HTTP-only config for initial certbot setup |
+| `deploy.sh` | One-command VPS setup script |
+
+---
+
 ## Testing
 
 ```bash
