@@ -47,11 +47,11 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Database
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_HOST: str
-    DB_PORT: str
-    DB_NAME: str
+    DB_USER: str = ""
+    DB_PASSWORD: str = ""
+    DB_HOST: str = ""
+    DB_PORT: str = ""
+    DB_NAME: str = ""
     DATABASE_URL: str | None = None
     DB_DRIVER: str = "postgresql+asyncpg"
 
