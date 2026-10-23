@@ -8,8 +8,9 @@ import { UsageFeed } from './components/UsageFeed'
 import { SimulatorPanel } from './components/SimulatorPanel'
 import { SeedBanner } from './components/SeedBanner'
 import { AdminPanel } from './components/AdminPanel'
+import { DocsPage } from './components/DocsPage'
 
-type Tab = 'dashboard' | 'admin'
+type Tab = 'dashboard' | 'admin' | 'docs'
 
 export default function App() {
   const [agentNames, setAgentNames] = useState<Record<string, string>>({})
@@ -75,6 +76,8 @@ export default function App() {
             <AdminPanel />
           </div>
         )}
+
+        {tab === 'docs' && <DocsPage />}
 
         {/* Contract footer */}
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs text-[var(--subtle)]">
