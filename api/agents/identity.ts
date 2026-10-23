@@ -76,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const walletClient = createWalletClient({ account, chain, transport })
   const publicClient = createPublicClient({ chain, transport })
 
-  const baseUrl = body.proxyBaseUrl ?? 'https://arc-studio-93db303c891b46febc11c14c.vercel.app'
+  const baseUrl = body.proxyBaseUrl ?? process.env.VITE_APP_URL ?? 'https://your-deploy.vercel.app'
 
   const registrationFile = {
     type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
