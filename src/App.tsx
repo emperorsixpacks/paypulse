@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { TreasuryHeader } from './components/TreasuryHeader'
 import { TreasuryPanel } from './components/TreasuryPanel'
 import { AgentGrid } from './components/AgentGrid'
@@ -10,11 +11,15 @@ import { SeedBanner } from './components/SeedBanner'
 import { AdminPanel } from './components/AdminPanel'
 import { DocsPage } from './components/DocsPage'
 
-type Tab = 'dashboard' | 'admin' | 'docs'
+const NAV_LINKS = [
+  { to: '/', label: 'Dashboard' },
+  { to: '/admin', label: 'Admin' },
+  { to: '/docs', label: 'Docs' },
+]
 
 export default function App() {
   const [agentNames, setAgentNames] = useState<Record<string, string>>({})
-  const [tab, setTab] = useState<Tab>('dashboard')
+  const location = useLocation()
 
   function mergeNames(names: Record<string, string>) {
     setAgentNames((prev) => ({ ...prev, ...names }))
@@ -26,58 +31,64 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-        {/* Demo seed banner */}
-        <SeedBanner onSeeded={mergeNames} />
+        {/* Demo seed banner — only on dashboard */}
+        {location.pathname === '/' && <SeedBanner onSeeded={mergeNames} />}
 
         {/* Tab nav */}
         <div className="flex gap-1 p-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] w-fit">
-          {(['dashboard', 'admin'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors"
-              style={{
-                background: tab === t ? 'var(--surface-strong)' : 'transparent',
-                color: tab === t ? 'var(--ink)' : 'var(--subtle)',
-              }}
+          {NAV_LINKS.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) =>
+                `px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                  isActive
+                    ? 'bg-[var(--surface-strong)] text-[var(--ink)]'
+                    : 'text-[var(--subtle)] hover:text-[var(--ink)]'
+                }`
+              }
             >
-              {t}
-            </button>
+              {label}
+            </NavLink>
           ))}
         </div>
 
-        {tab === 'dashboard' && (
-          <>
-            {/* Agent burn overview */}
-            <AgentGrid nameOverrides={agentNames} />
+        <Routes>
+          {/* Dashboard */}
+          <Route
+            path="/"
+            element={
+              <>
+                <AgentGrid nameOverrides={agentNames} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-6">
+                    <TreasuryPanel />
+                    <AddAgentPanel onAdded={() => {}} />
+                  </div>
+                  <div className="space-y-6">
+                    <BorrowQueue agentNames={agentNames} />
+                    <SimulatorPanel />
+                  </div>
+                </div>
+                <UsageFeed />
+              </>
+            }
+          />
 
-            {/* Middle row: treasury + borrow queue */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left column */}
-              <div className="space-y-6">
-                <TreasuryPanel />
-                <AddAgentPanel onAdded={() => {}} />
+          {/* Admin */}
+          <Route
+            path="/admin"
+            element={
+              <div className="max-w-xl">
+                <AdminPanel />
               </div>
+            }
+          />
 
-              {/* Right column */}
-              <div className="space-y-6">
-                <BorrowQueue agentNames={agentNames} />
-                <SimulatorPanel />
-              </div>
-            </div>
-
-            {/* Live call feed */}
-            <UsageFeed />
-          </>
-        )}
-
-        {tab === 'admin' && (
-          <div className="max-w-xl">
-            <AdminPanel />
-          </div>
-        )}
-
-        {tab === 'docs' && <DocsPage />}
+          {/* Docs */}
+          <Route path="/docs" element={<DocsPage />} />
+        </Routes>
 
         {/* Contract footer */}
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs text-[var(--subtle)]">
