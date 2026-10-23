@@ -35,18 +35,33 @@ export default function App() {
         {location.pathname === '/' && <SeedBanner onSeeded={mergeNames} />}
 
         {/* Tab nav */}
-        <div className="flex gap-1 p-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] w-fit">
+        <div
+          className="flex gap-0.5 p-1 rounded-xl w-fit"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid var(--border)',
+          }}
+        >
           {NAV_LINKS.map(({ to, label }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                `relative px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-[var(--surface-strong)] text-[var(--ink)]'
-                    : 'text-[var(--subtle)] hover:text-[var(--ink)]'
+                    ? 'text-[var(--ink)]'
+                    : 'text-[var(--subtle)] hover:text-[var(--muted)]'
                 }`
+              }
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      background: 'rgba(172,198,233,0.12)',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(172,198,233,0.2)',
+                    }
+                  : {}
               }
             >
               {label}

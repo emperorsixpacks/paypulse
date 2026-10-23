@@ -7,6 +7,7 @@
  * Requires CIRCLE_API_KEY + CIRCLE_ENTITY_SECRET in env.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { requireAdminKey } from '../_auth.js'
 import { store } from '../_store.js'
 
 const CORS = {
@@ -19,6 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v))
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
+  if (requireAdminKey(req, res)) return
 
   const apiKey = process.env.CIRCLE_API_KEY
   const entitySecret = process.env.CIRCLE_ENTITY_SECRET ?? process.env.ENTITY_SECRET

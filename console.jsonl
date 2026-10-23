@@ -307,3 +307,7 @@
 {"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792788016828}
 {"level":"debug","message":"[vite] hot updated: /src/components/TreasuryPanel.tsx","timestamp":1792788016829}
 {"level":"debug","message":"[vite] hot updated: /src/components/TreasuryHeader.tsx","timestamp":1792788016829}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792791404878}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792791404885}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792791484971}
+{"level":"debug","message":"[vite] connected.","timestamp":1792791489976}

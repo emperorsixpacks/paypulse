@@ -9,6 +9,7 @@
  * VITE_IDENTITY_REGISTRY holds the ERC-8004 registry address on Arc Testnet.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { requireAdminKey } from '../_auth.js'
 import { createWalletClient, createPublicClient, http, parseAbi } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { requireChain } from '../../src/onchain-facts.js'
@@ -29,6 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   Object.entries(CORS).forEach(([k, v]) => res.setHeader(k, v))
   if (req.method === 'OPTIONS') return res.status(204).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' })
+  if (requireAdminKey(req, res)) return
 
   const pk = process.env.PROXY_PRIVATE_KEY ?? ''
   if (!pk || !pk.startsWith('0x') || pk.length < 66) {
@@ -76,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const walletClient = createWalletClient({ account, chain, transport })
   const publicClient = createPublicClient({ chain, transport })
 
-  const baseUrl = body.proxyBaseUrl ?? process.env.VITE_APP_URL ?? 'https://your-deploy.vercel.app'
+  const baseUrl = body.proxyBaseUrl ?? process.env.VITE_APP_URL ?? 'https://paypulse.cv'
 
   const registrationFile = {
     type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
