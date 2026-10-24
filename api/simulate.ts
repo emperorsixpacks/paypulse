@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { store, addLog } from './_store.js'
 import { publicClient, PAYPULSE_ABI, CONTRACT_ADDRESS, CHARGE_PER_CALL } from './_chain.js'
+import { runSettle } from './settle.js'
 
 async function getAgentBudget(agentAddress: `0x${string}`) {
   if (!CONTRACT_ADDRESS) return null
@@ -64,6 +65,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     chargeUsdc: Number(charge),
     allowed: true,
   })
+
+  // Settle inline — no cron needed, draws go onchain immediately
+  void runSettle().catch((e) => console.error('[simulate] inline settle failed', e))
 
   return res.json({ ok: true, charged: charge.toString(), agent: agent.name })
 }

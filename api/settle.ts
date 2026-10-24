@@ -1,5 +1,5 @@
 /**
- * Batch draw settler — called by Vercel Cron every 10 seconds.
+ * Batch draw settler — called by Vercel Cron (hourly on Hobby) or inline after each simulate call.
  * Drains the pendingDraws queue and calls draw() on the PayPulse contract.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -8,18 +8,10 @@ import { PAYPULSE_ABI, CONTRACT_ADDRESS, getWalletClient } from './_chain.js'
 
 export const config = { maxDuration: 30 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-
-  if (req.method === 'OPTIONS') return res.status(204).end()
-
-  if (store.pendingDraws.length === 0) {
-    return res.json({ ok: true, settled: 0, message: 'nothing to settle' })
-  }
+export async function runSettle() {
+  if (store.pendingDraws.length === 0) return { settled: 0, simulated: false }
 
   const batch = store.pendingDraws.splice(0, store.pendingDraws.length)
-
-  // Aggregate by agent address
   const totals = new Map<string, bigint>()
   for (const d of batch) {
     totals.set(d.agentAddress, (totals.get(d.agentAddress) ?? 0n) + d.amount)
@@ -28,11 +20,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const walletClient = getWalletClient()
   if (!walletClient || !CONTRACT_ADDRESS) {
     console.log(`[settle-sim] ${batch.length} draws simulated (no wallet/contract configured)`)
-    return res.json({ ok: true, settled: batch.length, simulated: true })
+    return { settled: batch.length, simulated: true }
   }
 
   const results: { agent: string; amount: string; tx?: string; error?: string }[] = []
-
   for (const [addr, total] of totals) {
     try {
       const hash = await walletClient.writeContract({
@@ -48,6 +39,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       results.push({ agent: addr, amount: total.toString(), error: String(e) })
     }
   }
+  return { settled: results.length, simulated: false, results }
+}
 
-  return res.json({ ok: true, settled: results.length, results })
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  if (req.method === 'OPTIONS') return res.status(204).end()
+  const result = await runSettle()
+  return res.json({ ok: true, ...result })
 }
