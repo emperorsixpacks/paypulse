@@ -314,3 +314,5 @@
 {"level":"debug","message":"[vite] connected.","timestamp":1792791561274}
 {"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792792313174}
 {"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792793589465}
+{"level":"debug","message":"[vite] connected.","timestamp":1792835484412}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792835484826}
