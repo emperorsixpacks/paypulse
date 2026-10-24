@@ -14,8 +14,9 @@ export function UsageFeed() {
       </div>
 
       {error ? (
-        <div className="text-xs text-[var(--danger)] text-center py-4">
-          Proxy offline — start with <span className="mono">bun run server</span>
+        <div className="text-xs text-[var(--subtle)] text-center py-4 space-y-1">
+          <div>No activity yet — run the simulator to generate calls</div>
+          <div className="text-[10px] opacity-60">API initializing on first request…</div>
         </div>
       ) : log.length === 0 ? (
         <div className="text-sm text-[var(--subtle)] text-center py-8">
