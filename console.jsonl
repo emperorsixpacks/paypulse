@@ -323,3 +323,44 @@
 {"level":"debug","message":"[vite] connected.","timestamp":1792835645302}
 {"level":"debug","message":"[vite] connected.","timestamp":1792835907207}
 {"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792835908363}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792835916410}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792835917644}
+{"level":"debug","message":"[vite] connected.","timestamp":1792835924376}
+{"level":"debug","message":"[vite] connected.","timestamp":1792835925264}
+{"level":"debug","message":"[vite] connected.","timestamp":1792835931945}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792835937160}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792835937861}
+{"level":"debug","message":"[vite] connected.","timestamp":1792835937915}
+{"level":"warn","message":"(previous line repeated 3× more)","timestamp":1792835945584}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792835945584}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835945584}
+{"level":"warn","message":"(previous line repeated 3× more)","timestamp":1792835945585}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792835945585}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835945585}
+{"level":"debug","message":"[vite] hot updated: /src/App.tsx","timestamp":1792835945586}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835945586}
+{"level":"error","message":"[vite] ","timestamp":1792835945927}
+{"level":"error","message":"[vite] Failed to reload /src/components/SimulatorPanel.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792835945927}
+{"level":"error","message":"[vite] ","timestamp":1792835946225}
+{"level":"error","message":"[vite] Failed to reload /src/components/SimulatorPanel.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792835946225}
+{"level":"error","message":"[vite] ","timestamp":1792835946241}
+{"level":"error","message":"[vite] Failed to reload /src/components/SimulatorPanel.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792835946241}
+{"level":"debug","message":"[vite] hot updated: /src/components/SimulatorPanel.tsx","timestamp":1792835946775}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835946775}
+{"level":"debug","message":"[vite] hot updated: /src/components/SimulatorPanel.tsx","timestamp":1792835946778}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835946778}
+{"level":"debug","message":"[vite] hot updated: /src/components/SimulatorPanel.tsx","timestamp":1792835946778}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835946779}
+{"level":"error","message":"[vite] ","timestamp":1792835947140}
+{"level":"error","message":"[vite] Failed to reload /src/components/SeedBanner.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792835947140}
+{"level":"debug","message":"[vite] hot updated: /src/components/SeedBanner.tsx","timestamp":1792835947140}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835947140}
+{"level":"error","message":"[vite] ","timestamp":1792835947425}
+{"level":"error","message":"[vite] Failed to reload /src/components/SeedBanner.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792835947425}
+{"level":"debug","message":"[vite] hot updated: /src/components/SeedBanner.tsx","timestamp":1792835947425}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835947425}
+{"level":"error","message":"[vite] ","timestamp":1792835947434}
+{"level":"error","message":"[vite] Failed to reload /src/components/SeedBanner.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)","timestamp":1792835947434}
+{"level":"debug","message":"[vite] hot updated: /src/components/SeedBanner.tsx","timestamp":1792835947434}
+{"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835947434}
+{"level":"debug","message":"[vite] connected.","timestamp":1792835948342}

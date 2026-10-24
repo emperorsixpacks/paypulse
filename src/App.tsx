@@ -1,13 +1,10 @@
-import { useState } from 'react'
-import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { Routes, Route, NavLink } from 'react-router-dom'
 import { TreasuryHeader } from './components/TreasuryHeader'
 import { TreasuryPanel } from './components/TreasuryPanel'
 import { AgentGrid } from './components/AgentGrid'
 import { AddAgentPanel } from './components/AddAgentPanel'
 import { BorrowQueue } from './components/BorrowQueue'
 import { UsageFeed } from './components/UsageFeed'
-import { SimulatorPanel } from './components/SimulatorPanel'
-import { SeedBanner } from './components/SeedBanner'
 import { AdminPanel } from './components/AdminPanel'
 import { DocsPage } from './components/DocsPage'
 
@@ -18,21 +15,11 @@ const NAV_LINKS = [
 ]
 
 export default function App() {
-  const [agentNames, setAgentNames] = useState<Record<string, string>>({})
-  const location = useLocation()
-
-  function mergeNames(names: Record<string, string>) {
-    setAgentNames((prev) => ({ ...prev, ...names }))
-  }
-
   return (
     <div className="min-h-dvh" style={{ background: 'var(--bg-gradient)' }}>
       <TreasuryHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-
-        {/* Demo seed banner — only on dashboard */}
-        {location.pathname === '/' && <SeedBanner onSeeded={mergeNames} />}
 
         {/* Tab nav */}
         <div
@@ -75,18 +62,17 @@ export default function App() {
             path="/"
             element={
               <>
-                <AgentGrid nameOverrides={agentNames} />
+                <AgentGrid nameOverrides={{}} />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="space-y-6">
                     <TreasuryPanel />
                     <AddAgentPanel onAdded={() => {}} />
                   </div>
                   <div className="space-y-6">
-                    <BorrowQueue agentNames={agentNames} />
-                    <SimulatorPanel />
+                    <BorrowQueue agentNames={{}} />
+                    <UsageFeed />
                   </div>
                 </div>
-                <UsageFeed />
               </>
             }
           />
