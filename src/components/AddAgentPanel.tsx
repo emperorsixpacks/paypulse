@@ -4,18 +4,30 @@ import { toast } from 'sonner'
 import { PAYPULSE, ARC_TESTNET_ID } from '../contracts/paypulse'
 import { UserPlus } from 'lucide-react'
 
+const defaultForm = {
+  agentAddress: '',
+  allocationBps: '',
+  periodLength: '3600',
+  isLender: false,
+  maxLendBps: '0',
+}
+
 export function AddAgentPanel({ onAdded }: { onAdded?: () => void }) {
   const { address, chainId } = useAccount()
   const { switchChain } = useSwitchChain()
 
-  const [form, setForm] = useState({
-    agentAddress: '',
-    allocationBps: '',
-    periodLength: '3600',
-    isLender: false,
-    maxLendBps: '0',
+  const [form, setForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem('paypulse:addAgentForm')
+      return saved ? JSON.parse(saved) as typeof defaultForm : defaultForm
+    } catch { return defaultForm }
   })
   const [busy, setBusy] = useState(false)
+
+  // Persist form to localStorage
+  useEffect(() => {
+    localStorage.setItem('paypulse:addAgentForm', JSON.stringify(form))
+  }, [form])
 
   const wrongChain = chainId !== ARC_TESTNET_ID
 

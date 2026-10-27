@@ -88,6 +88,15 @@ export function useBorrowRequest(id: bigint | undefined): BorrowRequest | null {
   return { id: rid, agent, amount, reason, status: status as 0 | 1 | 2, approvals, rejections }
 }
 
+export function useProxy() {
+  return useReadContract({
+    ...PAYPULSE,
+    functionName: 'proxy',
+    chainId: ARC_TESTNET_ID,
+    query: { refetchInterval: 8000 },
+  })
+}
+
 export function useApproverList() {
   return useReadContract({
     ...PAYPULSE,
