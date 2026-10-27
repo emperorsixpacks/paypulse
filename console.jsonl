@@ -396,3 +396,5 @@
 {"level":"debug","message":"[vite] connected.","timestamp":1793097065356}
 {"level":"debug","message":"[vite] connected.","timestamp":1793097087338}
 {"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1793097087489}
+{"level":"debug","message":"[vite] connected.","timestamp":1793097547926}
+{"level":"debug","message":"[vite] connected.","timestamp":1793097548999}
