@@ -364,3 +364,11 @@
 {"level":"debug","message":"[vite] hot updated: /src/components/SeedBanner.tsx","timestamp":1792835947434}
 {"level":"debug","message":"[vite] hot updated: /src/index.css","timestamp":1792835947434}
 {"level":"debug","message":"[vite] connected.","timestamp":1792835948342}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792837093406}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792837658923}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792837663338}
+{"level":"debug","message":"[vite] connected.","timestamp":1792838066230}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1792838184140}
+{"level":"warn","message":"(previous line repeated 3× more)","timestamp":1792840411208}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1792840411208}
+{"level":"debug","message":"[vite] connected.","timestamp":1793095419632}

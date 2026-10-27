@@ -6,29 +6,26 @@ PayPulse is an onchain AI agent treasury. It allocates hard-capped USDC budgets 
 
 ## Quickstart — Connect an Agent in 3 Steps
 
-Any code that makes HTTP calls can become a PayPulse agent.
+### Step 1 — Get a wallet address
 
-### Step 1 — Get an agent address
+**Option A:** Use any EVM address you already control.
 
-Option A: Use a wallet address you already control.
-
-Option B: Create a Circle developer-controlled wallet via the API:
+**Option B:** Create a Circle developer-controlled wallet (requires `CIRCLE_API_KEY` + `CIRCLE_ENTITY_SECRET` env vars):
 
 ```bash
 curl -X POST https://paypulse.cv/api/agents/create \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "research",
-    "allocationBps": 4000,
-    "periodLength": 3600
-  }'
+  -H "X-Admin-Key: YOUR_ADMIN_KEY" \
+  -d '{"name":"research","allocationBps":4000,"periodLength":3600}'
 ```
 
-Returns `agent.address` and `agent.apiKey`.
+Returns `agent.address` and `agent.apiKey` — skip Steps 2a and 2b if you use this route.
 
-### Step 2 — Register the agent on-chain
+---
 
-From the **Add Agent** panel in the dashboard, or directly:
+### Step 2a — Register the agent on-chain
+
+From the **Add Agent** panel in the dashboard, or call the contract directly:
 
 ```solidity
 treasury.addAgent(
@@ -36,76 +33,141 @@ treasury.addAgent(
   4000,   // 40% of pool (basis points)
   3600,   // 1-hour budget period
   false,  // not a lender
-  0
+  0       // maxLendBps (0 if not a lender)
 );
 ```
 
-### Step 3 — Route API calls through the proxy
+---
 
-Replace your upstream API URL with the PayPulse proxy and add your API key:
+### Step 2b — Register the agent with the proxy
 
-```python
-# Before
-response = requests.get("https://api.example.com/search?q=climate")
+This gives the agent an API key it will use on every call:
 
-# After — budget-metered
-response = requests.get(
-    "https://paypulse.cv/api/proxy/search?q=climate",
-    headers={"X-Agent-Key": "ppk-research-abc123"}
-)
-
-if response.status_code == 402:
-    # Budget exhausted — request a borrow or wait for period reset
-    requests.post("https://paypulse.cv/api/borrow", json={
-        "apiKey": "ppk-research-abc123",
-        "amount": "50000",
-        "reason": "Need extra budget for large research batch"
-    })
+```bash
+curl -X POST https://paypulse.cv/api/agents/register \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Key: YOUR_ADMIN_KEY" \
+  -d '{"address":"0xYourAgentAddress","name":"research"}'
 ```
 
-The proxy checks budget on-chain before every call, meters usage, and settles draws to the contract automatically.
+Response:
+```json
+{
+  "ok": true,
+  "apiKey": "ppk-research-a1b2c3",
+  "name": "research",
+  "address": "0xYourAgentAddress"
+}
+```
+
+Save the `apiKey` — this is the agent's `X-Agent-Key` on every proxy call.
+
+---
+
+### Step 3 — Route calls through the proxy
+
+Replace any upstream API URL with the PayPulse proxy and add `X-Agent-Key`:
+
+```bash
+# Budget check + forwarded GET
+curl "https://paypulse.cv/api/proxy/get?q=hello" \
+  -H "X-Agent-Key: ppk-research-a1b2c3"
+
+# Budget exhausted → 402
+# {
+#   "error": "Payment Required",
+#   "code": "BUDGET_EXHAUSTED",
+#   "remaining": "0",
+#   "hint": "Request a borrow via POST /api/borrow"
+# }
+```
+
+The proxy checks budget on-chain before every call, meters usage, and settles draws to the contract.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    PayPulse System                       │
-│                                                          │
-│  ┌──────────┐    API key    ┌─────────────────────────┐ │
-│  │  Agent   │──────────────▶│   Metering Proxy        │ │
-│  │ (any AI  │◀──── 402 ────│   /api/proxy/[...path]  │ │
-│  │  harness)│               │                         │ │
-│  └──────────┘               │  1. auth (X-Agent-Key)  │ │
-│                             │  2. budget check (RPC)  │ │
-│  ┌──────────┐               │  3. forward upstream    │ │
-│  │ Human    │  approve/     │  4. queue draw()        │ │
-│  │ Approver │──reject──────▶│                         │ │
-│  └──────────┘               └──────────┬──────────────┘ │
-│                                        │ settle          │
-│                                        ▼ (every 1 min)  │
-│                             ┌─────────────────────────┐ │
-│                             │  PayPulse.sol            │ │
-│                             │  (Arc Testnet)           │ │
-│                             │                          │ │
-│                             │  poolBalance             │ │
-│                             │  agents[].allocation     │ │
-│                             │  agents[].spent          │ │
-│                             │  borrowRequests[]        │ │
-│                             └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    PayPulse System                        │
+│                                                           │
+│  ┌──────────┐    X-Agent-Key   ┌──────────────────────┐  │
+│  │  Agent   │─────────────────▶│  Metering Proxy      │  │
+│  │ (any AI  │◀──── 402 ────── │  /api/proxy/[path]   │  │
+│  │ harness) │                  │                      │  │
+│  └──────────┘                  │  1. auth (API key)   │  │
+│                                │  2. budget check RPC │  │
+│  ┌──────────┐                  │  3. forward upstream │  │
+│  │  Human   │  approve/reject  │  4. queue draw()     │  │
+│  │ Approver │─────────────────▶│  5. settle onchain   │  │
+│  └──────────┘                  └──────────┬───────────┘  │
+│                                           │              │
+│                                           ▼              │
+│                                ┌──────────────────────┐  │
+│                                │   PayPulse.sol       │  │
+│                                │   Arc Testnet        │  │
+│                                │                      │  │
+│                                │   poolBalance        │  │
+│                                │   agents[].allocation│  │
+│                                │   agents[].spent     │  │
+│                                │   borrowRequests[]   │  │
+│                                └──────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
 ```
-
-**PayPulse.sol** holds pooled USDC. Agents get percentage-based allocations that reset every period. Borrows under 50% of allocation auto-approve if pool has funds. Larger requests enter a 2-of-3 human multisig queue.
-
-**Metering proxy** (`/api/proxy/*`) authenticates the API key, reads on-chain budget, rejects with 402 if over cap, forwards the request, and queues a `draw()` for settlement.
-
-**Batch settler** (`/api/settle`) runs every minute and drains the draw queue.
 
 ---
 
-## Connecting Harnesses and Frameworks
+## MCP Server
+
+PayPulse ships an MCP server so any MCP-compatible agent (Claude Desktop, Cursor, Continue) can use the proxy directly as a tool.
+
+### Setup
+
+```bash
+# 1. Clone / install
+cd mcp/
+bun add @modelcontextprotocol/sdk
+
+# 2. Set env vars
+export PAYPULSE_URL=https://paypulse.cv
+export PAYPULSE_AGENT_KEY=ppk-research-a1b2c3
+
+# 3. Run
+bun run mcp/paypulse-mcp.ts
+```
+
+### Claude Desktop config
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "paypulse": {
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp/paypulse-mcp.ts"],
+      "env": {
+        "PAYPULSE_URL": "https://paypulse.cv",
+        "PAYPULSE_AGENT_KEY": "ppk-research-a1b2c3"
+      }
+    }
+  }
+}
+```
+
+### MCP Tools
+
+| Tool | What it does |
+|---|---|
+| `paypulse_call` | Budget-metered GET through the proxy |
+| `paypulse_post` | Budget-metered POST through the proxy |
+| `paypulse_usage` | Recent call history for this agent |
+| `paypulse_borrow` | Request a budget increase |
+
+---
+
+## Framework Examples
 
 ### LangChain (Python)
 
@@ -113,20 +175,16 @@ The proxy checks budget on-chain before every call, meters usage, and settles dr
 from langchain.tools import tool
 import requests
 
-PROXY_BASE = "https://paypulse.cv/api/proxy"
-AGENT_KEY = "ppk-research-001"
+PROXY = "https://paypulse.cv/api/proxy"
+KEY = "ppk-research-a1b2c3"
 
 @tool
 def web_search(query: str) -> str:
-    """Search the web. Budget-metered via PayPulse."""
-    resp = requests.get(
-        f"{PROXY_BASE}/get",
-        params={"q": query},
-        headers={"X-Agent-Key": AGENT_KEY},
-    )
-    if resp.status_code == 402:
-        return f"Budget exhausted. Remaining: {resp.json().get('remaining')} micro-USDC."
-    return resp.json().get("args", {}).get("q", "no result")
+    """Search the web — budget-metered via PayPulse."""
+    r = requests.get(f"{PROXY}/get", params={"q": query}, headers={"X-Agent-Key": KEY})
+    if r.status_code == 402:
+        return f"Budget exhausted. Remaining: {r.json().get('remaining')} micro-USDC."
+    return r.text
 ```
 
 ### CrewAI
@@ -134,13 +192,12 @@ def web_search(query: str) -> str:
 ```python
 from crewai_tools import tool
 
-@tool("PayPulse Proxied Search")
-def proxied_search(query: str) -> str:
+@tool("PayPulse Proxied Request")
+def proxied_request(path: str) -> str:
     import requests
     r = requests.get(
-        "https://paypulse.cv/api/proxy/get",
-        params={"q": query},
-        headers={"X-Agent-Key": "ppk-scraper-001"},
+        f"https://paypulse.cv/api/proxy{path}",
+        headers={"X-Agent-Key": "ppk-scraper-a1b2c3"},
     )
     return r.text if r.status_code == 200 else f"402: {r.json()}"
 ```
@@ -153,106 +210,74 @@ def call_proxied_api(path: str, params: dict) -> dict:
     r = requests.get(
         f"https://paypulse.cv/api/proxy{path}",
         params=params,
-        headers={"X-Agent-Key": "ppk-support-001"},
+        headers={"X-Agent-Key": "ppk-support-a1b2c3"},
     )
     if r.status_code == 402:
         return {"error": "budget_exhausted", "remaining": r.json().get("remaining")}
     return r.json()
 ```
 
-### MCP server
-
-```typescript
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-
-const PROXY = "https://paypulse.cv/api/proxy";
-const KEY = process.env.AGENT_API_KEY!;
-
-const server = new Server({ name: "paypulse-mcp", version: "1.0.0" }, {
-  capabilities: { tools: {} },
-});
-
-server.setRequestHandler("tools/call", async (req) => {
-  const { path = "/get", params = {} } = req.params.arguments as Record<string, unknown>;
-  const url = new URL(`${PROXY}${path}`);
-  Object.entries(params as Record<string, string>).forEach(([k, v]) => url.searchParams.set(k, v));
-  const r = await fetch(url.toString(), { headers: { "X-Agent-Key": KEY } });
-  const body = await r.json();
-  return {
-    content: [{ type: "text", text: r.status === 402 ? `402: ${body.error}` : JSON.stringify(body) }],
-  };
-});
-
-await server.connect(new StdioServerTransport());
-```
-
 ---
 
 ## API Reference
 
-All endpoints are at `https://paypulse.cv`.
+All endpoints are at `https://paypulse.cv`.  
+`*` = requires `X-Admin-Key: YOUR_ADMIN_KEY` header.
 
-### `POST /api/agents/create`
+### `POST /api/agents/register` *
 
-Create a Circle developer-controlled wallet for a new agent.
-
-**Auth required:** `Authorization: Bearer <PAYPULSE_ADMIN_KEY>` or `X-Admin-Key: <PAYPULSE_ADMIN_KEY>`
+Register an existing wallet address with the proxy. Required before any agent can use the proxy.
 
 **Body:**
 ```json
-{
-  "name": "research",
-  "allocationBps": 4000,
-  "periodLength": 3600,
-  "isLender": true,
-  "maxLendBps": 2000
-}
-```
-
-**Example:**
-```bash
-curl -X POST https://paypulse.cv/api/agents/create \
-  -H "Content-Type: application/json" \
-  -H "X-Admin-Key: your-admin-key" \
-  -d '{"name":"research","allocationBps":4000,"periodLength":3600}'
+{ "address": "0xYourAgentAddress", "name": "research" }
 ```
 
 **Response:**
 ```json
-{
-  "ok": true,
-  "agent": {
-    "name": "research",
-    "address": "0xabc...",
-    "apiKey": "ppk-research-1a2b3c"
-  }
-}
+{ "ok": true, "apiKey": "ppk-research-a1b2c3", "name": "research", "address": "0x..." }
 ```
 
 ---
 
-### `POST /api/agents/identity`
+### `GET /api/agents/list`
 
-Register an agent in the Arc ERC-8004 identity registry.
+List all agents registered with the proxy (names and addresses only — no API keys).
+
+---
+
+### `POST /api/agents/create` *
+
+Create a new Circle developer-controlled wallet and register it with the proxy in one call. Requires `CIRCLE_API_KEY` + `CIRCLE_ENTITY_SECRET` in Vercel env vars.
 
 **Body:**
 ```json
-{
-  "agentAddress": "0xabc...",
-  "name": "Research Agent",
-  "description": "Finds academic papers and summarizes them",
-  "proxyBaseUrl": "https://paypulse.cv"
-}
+{ "name": "research", "allocationBps": 4000, "periodLength": 3600 }
+```
+
+**Response:**
+```json
+{ "ok": true, "agent": { "name": "research", "address": "0x...", "apiKey": "ppk-research-a1b2c3" } }
 ```
 
 ---
 
-### `GET /api/proxy/[...path]` · `POST /api/proxy/[...path]`
+### `POST /api/agents/identity` *
 
-Budget-gated proxy. Add `X-Agent-Key: ppk-<name>-<id>` to every request.
+Register an agent in the Arc ERC-8004 identity registry. Requires `PROXY_PRIVATE_KEY` + `VITE_IDENTITY_REGISTRY` in env vars.
 
-**Success (200):** upstream response plus `X-Charge-USDC` header.
+**Body:**
+```json
+{ "agentAddress": "0x...", "name": "Research Agent", "description": "..." }
+```
+
+---
+
+### `GET /api/proxy/[path]` · `POST /api/proxy/[path]`
+
+Budget-gated proxy. Pass `X-Agent-Key` on every request. The agent must be registered via `/api/agents/register` first.
+
+**Success (200):** upstream response body + `X-Charge-USDC` header.
 
 **Budget exhausted (402):**
 ```json
@@ -268,15 +293,11 @@ Budget-gated proxy. Add `X-Agent-Key: ppk-<name>-<id>` to every request.
 
 ### `POST /api/borrow`
 
-Request a budget increase. Auto-approves if under 50% threshold and pool has funds.
+Request a budget increase. Auto-approves below 50% of allocation if pool has funds. Above that enters the 2-of-3 approver queue visible in the dashboard. Requires `PROXY_PRIVATE_KEY` in env vars.
 
 **Body:**
 ```json
-{
-  "apiKey": "ppk-research-1a2b3c",
-  "amount": "50000",
-  "reason": "Large document batch"
-}
+{ "apiKey": "ppk-research-a1b2c3", "amount": "1000000", "reason": "Large research batch" }
 ```
 
 ---
@@ -292,8 +313,14 @@ Last 100 proxy calls in reverse-chronological order.
 On-chain budget state for an agent address.
 
 ```json
-{ "allocation": "1000000", "spent": "42000", "remaining": "958000" }
+{ "allocation": "10000000", "spent": "420000", "remaining": "9580000" }
 ```
+
+---
+
+### `POST /api/settle`
+
+Drain the pending draw queue and settle onchain. Called automatically after every proxy call. Can also be triggered manually.
 
 ---
 
@@ -321,18 +348,18 @@ On-chain budget state for an agent address.
 
 ## Environment Variables
 
-Set these in your Vercel project: **Settings → Environment Variables**.
+Set these in **Vercel → Settings → Environment Variables**.
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_PAYPULSE_ADDRESS` | Yes | Deployed contract address — `0xf59d0bebdfcdbf4a68505efb91abe68595819993` |
-| `PAYPULSE_ADMIN_KEY` | Yes | Any strong random string. Protects `/api/agents/create` and `/api/agents/identity`. Pass as `X-Admin-Key` header. |
-| `PROXY_PRIVATE_KEY` | Yes (onchain) | Private key of the wallet registered as proxy on-chain via `setProxy()`. Signs `draw()` and `disburse()` calls. |
-| `CIRCLE_API_KEY` | For wallet creation | Standard Developer API Key from [Circle Console](https://console.circle.com). |
-| `CIRCLE_ENTITY_SECRET` | For wallet creation | Entity secret paired with the API key. Register once via the Admin tab. |
-| `VITE_IDENTITY_REGISTRY` | For ERC-8004 | Arc Testnet identity registry address (from Arc docs). |
+| `VITE_PAYPULSE_ADDRESS` | Yes | `0xf59d0bebdfcdbf4a68505efb91abe68595819993` |
+| `PAYPULSE_ADMIN_KEY` | Yes | Random string protecting admin routes. Pass as `X-Admin-Key`. |
+| `PROXY_PRIVATE_KEY` | For onchain settlement | Private key of the wallet set as proxy via `setProxy()`. |
+| `CIRCLE_API_KEY` | For `/api/agents/create` | Standard Developer API Key from Circle Console. |
+| `CIRCLE_ENTITY_SECRET` | For `/api/agents/create` | Entity secret paired with the API key. |
+| `VITE_IDENTITY_REGISTRY` | For ERC-8004 | Arc Testnet identity registry contract address. |
 
-**Generate a strong admin key:**
 ```bash
+# Generate a strong admin key
 openssl rand -hex 32
 ```
