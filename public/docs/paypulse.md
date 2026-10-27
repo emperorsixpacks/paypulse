@@ -66,23 +66,29 @@ Save the `apiKey` — this is the agent's `X-Agent-Key` on every proxy call.
 
 ### Step 3 — Route calls through the proxy
 
-Replace any upstream API URL with the PayPulse proxy and add `X-Agent-Key`:
+Keep your upstream URL exactly as-is. Pass it in `X-Upstream-URL`, add your agent key, and put any auth headers for the upstream in `X-Upstream-Headers`:
 
 ```bash
-# Budget check + forwarded GET
-curl "https://paypulse.cv/api/proxy/get?q=hello" \
-  -H "X-Agent-Key: ppk-research-a1b2c3"
-
-# Budget exhausted → 402
-# {
-#   "error": "Payment Required",
-#   "code": "BUDGET_EXHAUSTED",
-#   "remaining": "0",
-#   "hint": "Request a borrow via POST /api/borrow"
-# }
+# Call any upstream API — budget-metered
+curl -X POST "https://paypulse.cv/api/proxy" \
+  -H "X-Agent-Key: ppk-research-a1b2c3" \
+  -H "X-Upstream-URL: https://api.openai.com/v1/chat/completions" \
+  -H "X-Upstream-Headers: {\"Authorization\":\"Bearer sk-...\"}" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"hello"}]}'
 ```
 
-The proxy checks budget on-chain before every call, meters usage, and settles draws to the contract.
+If budget is exhausted you get a `402`:
+```json
+{
+  "error": "Payment Required",
+  "code": "BUDGET_EXHAUSTED",
+  "remaining": "0",
+  "hint": "POST /api/borrow with your apiKey to request more budget"
+}
+```
+
+The proxy checks budget on-chain, forwards the full request to the real upstream, returns the upstream response transparently, and settles the draw to the contract.
 
 ---
 
@@ -173,31 +179,46 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```python
 from langchain.tools import tool
-import requests
+import requests, json
 
 PROXY = "https://paypulse.cv/api/proxy"
 KEY = "ppk-research-a1b2c3"
 
 @tool
-def web_search(query: str) -> str:
-    """Search the web — budget-metered via PayPulse."""
-    r = requests.get(f"{PROXY}/get", params={"q": query}, headers={"X-Agent-Key": KEY})
+def call_openai(prompt: str) -> str:
+    """Call OpenAI — budget-metered via PayPulse."""
+    r = requests.post(
+        PROXY,
+        headers={
+            "X-Agent-Key": KEY,
+            "X-Upstream-URL": "https://api.openai.com/v1/chat/completions",
+            "X-Upstream-Headers": json.dumps({"Authorization": "Bearer sk-..."}),
+            "Content-Type": "application/json",
+        },
+        json={"model": "gpt-4o-mini", "messages": [{"role": "user", "content": prompt}]},
+    )
     if r.status_code == 402:
         return f"Budget exhausted. Remaining: {r.json().get('remaining')} micro-USDC."
-    return r.text
+    return r.json()["choices"][0]["message"]["content"]
 ```
 
 ### CrewAI
 
 ```python
 from crewai_tools import tool
+import requests, json
 
 @tool("PayPulse Proxied Request")
-def proxied_request(path: str) -> str:
-    import requests
-    r = requests.get(
-        f"https://paypulse.cv/api/proxy{path}",
-        headers={"X-Agent-Key": "ppk-scraper-a1b2c3"},
+def proxied_request(upstream_url: str, payload: dict) -> str:
+    """Forward any API call through PayPulse budget gating."""
+    r = requests.post(
+        "https://paypulse.cv/api/proxy",
+        headers={
+            "X-Agent-Key": "ppk-scraper-a1b2c3",
+            "X-Upstream-URL": upstream_url,
+            "Content-Type": "application/json",
+        },
+        json=payload,
     )
     return r.text if r.status_code == 200 else f"402: {r.json()}"
 ```
@@ -205,12 +226,17 @@ def proxied_request(path: str) -> str:
 ### OpenAI function calling
 
 ```python
-def call_proxied_api(path: str, params: dict) -> dict:
-    import requests
-    r = requests.get(
-        f"https://paypulse.cv/api/proxy{path}",
-        params=params,
-        headers={"X-Agent-Key": "ppk-support-a1b2c3"},
+def call_proxied_api(upstream_url: str, payload: dict, upstream_headers: dict = {}) -> dict:
+    import requests, json
+    r = requests.post(
+        "https://paypulse.cv/api/proxy",
+        headers={
+            "X-Agent-Key": "ppk-support-a1b2c3",
+            "X-Upstream-URL": upstream_url,
+            "X-Upstream-Headers": json.dumps(upstream_headers),
+            "Content-Type": "application/json",
+        },
+        json=payload,
     )
     if r.status_code == 402:
         return {"error": "budget_exhausted", "remaining": r.json().get("remaining")}
@@ -273,11 +299,28 @@ Register an agent in the Arc ERC-8004 identity registry. Requires `PROXY_PRIVATE
 
 ---
 
-### `GET /api/proxy/[path]` · `POST /api/proxy/[path]`
+### `ANY /api/proxy`
 
-Budget-gated proxy. Pass `X-Agent-Key` on every request. The agent must be registered via `/api/agents/register` first.
+Budget-gated proxy. Forwards to any upstream URL. Agent must be registered first.
 
-**Success (200):** upstream response body + `X-Charge-USDC` header.
+**Required headers:**
+- `X-Agent-Key: ppk-<name>-<id>` — your agent's API key
+- `X-Upstream-URL: https://real-api.com/endpoint` — the actual URL to call
+
+**Optional headers:**
+- `X-Upstream-Headers: {"Authorization":"Bearer ..."}` — upstream auth (JSON)
+
+**Example:**
+```bash
+curl -X POST https://paypulse.cv/api/proxy \
+  -H "X-Agent-Key: ppk-research-a1b2c3" \
+  -H "X-Upstream-URL: https://api.openai.com/v1/chat/completions" \
+  -H "X-Upstream-Headers: {\"Authorization\":\"Bearer sk-...\"}" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hello"}]}'
+```
+
+**Success (200):** upstream response body + `X-Charge-USDC` and `X-PayPulse-Remaining` headers.
 
 **Budget exhausted (402):**
 ```json
@@ -285,7 +328,7 @@ Budget-gated proxy. Pass `X-Agent-Key` on every request. The agent must be regis
   "error": "Payment Required",
   "code": "BUDGET_EXHAUSTED",
   "remaining": "0",
-  "hint": "Request a borrow via POST /api/borrow"
+  "hint": "POST /api/borrow with your apiKey to request more budget"
 }
 ```
 
