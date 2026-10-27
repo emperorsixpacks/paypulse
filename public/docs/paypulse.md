@@ -126,26 +126,26 @@ The proxy checks budget on-chain, forwards the full request to the real upstream
 
 ## MCP Server
 
-PayPulse ships an MCP server so any MCP-compatible agent (Claude Desktop, Cursor, Continue) can use the proxy directly as a tool.
+PayPulse ships an MCP server that works with **Claude Code**, **Claude Desktop**, **OpenCode**, **Cursor**, and any MCP-compatible agent. Every tool call is budget-checked on-chain before forwarding to the real API.
 
-### Setup
+### Install
 
 ```bash
-# 1. Clone / install
 cd mcp/
-bun add @modelcontextprotocol/sdk
-
-# 2. Set env vars
-export PAYPULSE_URL=https://paypulse.cv
-export PAYPULSE_AGENT_KEY=ppk-research-a1b2c3
-
-# 3. Run
-bun run mcp/paypulse-mcp.ts
+bun install
 ```
 
-### Claude Desktop config
+### MCP Tools
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+| Tool | What it does |
+|---|---|
+| `paypulse_fetch` | Budget-metered HTTP request to **any upstream URL** |
+| `paypulse_budget` | Check allocation, spent, remaining balance + recent calls |
+| `paypulse_borrow` | Request a budget increase (auto-approves under 50% threshold) |
+
+### Claude Code
+
+Add `.mcp.json` to your project root:
 
 ```json
 {
@@ -155,21 +155,86 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "args": ["/absolute/path/to/mcp/paypulse-mcp.ts"],
       "env": {
         "PAYPULSE_URL": "https://paypulse.cv",
-        "PAYPULSE_AGENT_KEY": "ppk-research-a1b2c3"
+        "PAYPULSE_AGENT_KEY": "ppk-myagent-abc123"
       }
     }
   }
 }
 ```
 
-### MCP Tools
+Then run `/mcp` in Claude Code to confirm `paypulse` is listed.
 
-| Tool | What it does |
-|---|---|
-| `paypulse_call` | Budget-metered GET through the proxy |
-| `paypulse_post` | Budget-metered POST through the proxy |
-| `paypulse_usage` | Recent call history for this agent |
-| `paypulse_borrow` | Request a budget increase |
+### Claude Desktop
+
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+
+```json
+{
+  "mcpServers": {
+    "paypulse": {
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp/paypulse-mcp.ts"],
+      "env": {
+        "PAYPULSE_URL": "https://paypulse.cv",
+        "PAYPULSE_AGENT_KEY": "ppk-myagent-abc123"
+      }
+    }
+  }
+}
+```
+
+### OpenCode
+
+Edit `~/.config/opencode/config.json`:
+
+```json
+{
+  "mcp": {
+    "paypulse": {
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp/paypulse-mcp.ts"],
+      "environment": {
+        "PAYPULSE_URL": "https://paypulse.cv",
+        "PAYPULSE_AGENT_KEY": "ppk-myagent-abc123"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add `.cursor/mcp.json` to your project:
+
+```json
+{
+  "mcpServers": {
+    "paypulse": {
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp/paypulse-mcp.ts"],
+      "env": {
+        "PAYPULSE_URL": "https://paypulse.cv",
+        "PAYPULSE_AGENT_KEY": "ppk-myagent-abc123"
+      }
+    }
+  }
+}
+```
+
+### Example
+
+Once connected, your agent calls real APIs through your PayPulse budget:
+
+```
+paypulse_fetch({
+  upstreamUrl: "https://api.openai.com/v1/chat/completions",
+  method: "POST",
+  upstreamHeaders: { "Authorization": "Bearer sk-..." },
+  body: { "model": "gpt-4o-mini", "messages": [{ "role": "user", "content": "hello" }] }
+})
+```
+
+If budget is exhausted it returns `{ "code": "BUDGET_EXHAUSTED", "hint": "Call paypulse_borrow..." }` and the agent can escalate automatically.
 
 ---
 
