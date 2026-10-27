@@ -6,6 +6,7 @@ import { AddAgentPanel } from './components/AddAgentPanel'
 import { BorrowQueue } from './components/BorrowQueue'
 import { UsageFeed } from './components/UsageFeed'
 import { AdminPanel } from './components/AdminPanel'
+import { SettlePanel } from './components/SettlePanel'
 import { DocsPage } from './components/DocsPage'
 
 const NAV_LINKS = [
@@ -82,8 +83,9 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              <div className="max-w-xl">
+              <div className="max-w-xl space-y-6">
                 <AdminPanel />
+                <SettlePanel />
               </div>
             }
           />

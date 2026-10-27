@@ -1,12 +1,11 @@
 /**
- * Viem client for Arc Testnet — shared across Vercel API functions.
- * Chain facts are inlined here (verified from Arc Studio onchain-facts registry this session).
- * RPC URL prefers the proxy env vars when available, falls back to the public endpoint.
+ * Viem public client for Arc Testnet — shared across Vercel API functions.
+ * No private key here. Settlement is signed by the agent's own wallet or
+ * the treasury owner via the dashboard. The proxy only tracks spend off-chain.
  */
-import { createPublicClient, createWalletClient, http, parseAbi } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
+import { createPublicClient, http, parseAbi } from 'viem'
 
-// Arc Testnet — verified from onchain-facts registry: chainId=5042002, rpcUrls[0] verified
+// Arc Testnet — verified from onchain-facts registry: chainId=5042002
 const ARC_TESTNET_CHAIN_ID = 5042002
 const ARC_TESTNET_RPC_PUBLIC = 'https://rpc.testnet.arc.io' // arc-studio-allow-onchain-literal
 
@@ -24,9 +23,10 @@ export const arcTestnetChain = {
   rpcUrls: { default: { http: [RPC_URL] } },
 } as const
 
-const transport = http(RPC_URL)
-
-export const publicClient = createPublicClient({ chain: arcTestnetChain, transport })
+export const publicClient = createPublicClient({
+  chain: arcTestnetChain,
+  transport: http(RPC_URL),
+})
 
 export const PAYPULSE_ABI = parseAbi([
   'function draw(address agent, uint256 amount) external',
@@ -45,10 +45,3 @@ export const CONTRACT_ADDRESS = (process.env.VITE_PAYPULSE_ADDRESS ?? '') as `0x
 
 // Cost per proxied call: 0.001 USDC (1000 micro-USDC, 6 decimals)
 export const CHARGE_PER_CALL = 1_000n
-
-export function getWalletClient() {
-  const pk = process.env.PROXY_PRIVATE_KEY ?? ''
-  if (!pk || !pk.startsWith('0x') || pk.length < 66) return null
-  const account = privateKeyToAccount(pk as `0x${string}`)
-  return createWalletClient({ account, chain: arcTestnetChain, transport })
-}

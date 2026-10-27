@@ -406,3 +406,11 @@
 {"level":"debug","message":"[vite] connected.","timestamp":1793099452492}
 {"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1793099452563}
 {"level":"debug","message":"[vite] connected.","timestamp":1793099495060}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1793099546056}
+{"level":"warn","message":"(previous line repeated 1× more)","timestamp":1793099546075}
+{"level":"debug","message":"[vite] connected.","timestamp":1793099546075}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1793099546142}
+{"level":"debug","message":"[vite] connected.","timestamp":1793099794935}
+{"level":"debug","message":"[vite] connected.","timestamp":1793099800411}
+{"level":"debug","message":"[vite] connected.","timestamp":1793100117400}
+{"level":"log","message":"[vite] server connection lost. Polling for restart...","timestamp":1793102467190}

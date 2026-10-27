@@ -74,7 +74,7 @@ export function AdminPanel() {
         )}
 
         <p className="text-xs text-[var(--subtle)]">
-          Set the authorized proxy wallet that can call <span className="mono">draw()</span>. Use the wallet address matching your <span className="mono">PROXY_PRIVATE_KEY</span> env var.
+          Set the authorized proxy wallet that can call <span className="mono">draw()</span>. Use any wallet address you control — this wallet will sign draw() calls from the Settle panel.
         </p>
         <div className="flex gap-2">
           <input
