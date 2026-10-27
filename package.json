@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node -e \"const fs=require('fs');fs.writeFileSync('dist/vercel.json',JSON.stringify({rewrites:[{source:'/api/(.*)',destination:'/api/$1'},{source:'/((?!api/).*)',destination:'/index.html'}]}));\"",
+    "build": "cp mcp/SKILL.md public/skill.md && vite build && node -e \"const fs=require('fs');fs.writeFileSync('dist/vercel.json',JSON.stringify({rewrites:[{source:'/api/(.*)',destination:'/api/$1'},{source:'/((?!api/).*)',destination:'/index.html'}]}));\"",
     "server": "bun run server/proxy.ts",
     "start": "concurrently \"bun run dev\" \"bun run server\"",
     "deploy:self": "bun run ./scripts/self-deploy.ts",

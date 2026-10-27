@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { to: '/', label: 'Dashboard' },
   { to: '/admin', label: 'Admin' },
   { to: '/docs', label: 'Docs' },
+  { to: '/for-agents', label: 'For Agents' },
 ]
 
 export default function App() {
@@ -88,7 +89,10 @@ export default function App() {
           />
 
           {/* Docs */}
-          <Route path="/docs" element={<DocsPage />} />
+          <Route path="/docs" element={<DocsPage src="/docs/paypulse.md" />} />
+
+          {/* For Agents — machine-readable skill file rendered for humans too */}
+          <Route path="/for-agents" element={<DocsPage src="/skill.md" />} />
         </Routes>
 
         {/* Contract footer */}
