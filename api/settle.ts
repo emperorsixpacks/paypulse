@@ -3,8 +3,8 @@
  * Drains the pendingDraws queue and calls draw() on the PayPulse contract.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { store } from './_store'
-import { PAYPULSE_ABI, CONTRACT_ADDRESS, getWalletClient } from './_chain'
+import { store } from './_store.js'
+import { PAYPULSE_ABI, CONTRACT_ADDRESS, getWalletClient } from './_chain.js'
 
 export const config = { maxDuration: 30 }
 

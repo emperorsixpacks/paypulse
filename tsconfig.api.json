@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "outDir": ".vercel/output/functions",
+    "rootDir": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["api/**/*", "src/onchain-facts.ts", "src/onchain-money.ts"]
+}

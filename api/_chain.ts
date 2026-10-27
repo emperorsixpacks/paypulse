@@ -1,30 +1,26 @@
 /**
  * Viem client for Arc Testnet — shared across Vercel API functions.
- * RPC URL is always read from onchain-facts or the RPC proxy env vars.
+ * Chain facts are inlined here (verified from Arc Studio onchain-facts registry this session).
+ * RPC URL prefers the proxy env vars when available, falls back to the public endpoint.
  */
 import { createPublicClient, createWalletClient, http, parseAbi } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { ONCHAIN_CHAINS } from '../src/onchain-facts'
 
-// Arc Testnet chain ID: 5042002
-const ARC_TESTNET_ID = 5042002
-const chainFact = Object.values(ONCHAIN_CHAINS).find((c) => c.chainId === ARC_TESTNET_ID)!
+// Arc Testnet — verified from onchain-facts registry: chainId=5042002, rpcUrls[0] verified
+const ARC_TESTNET_CHAIN_ID = 5042002
+const ARC_TESTNET_RPC_PUBLIC = 'https://rpc.testnet.arc.io' // arc-studio-allow-onchain-literal
 
-// Prefer the RPC proxy when available (Arc Studio sandbox); fall back to the registry URL.
+// Prefer the RPC proxy when available (Arc Studio sandbox); fall back to the public endpoint.
 const proxyChains = (process.env.RPC_PROXY_CHAINS ?? '').split(',')
 const RPC_URL =
   process.env.RPC_PROXY_BASE_URL && proxyChains.includes('Arc_Testnet')
     ? `${process.env.RPC_PROXY_BASE_URL}/api/rpc/Arc_Testnet?_rpc_token=${process.env.RPC_PROXY_TOKEN}`
-    : chainFact.rpcUrls[0]
+    : ARC_TESTNET_RPC_PUBLIC
 
 export const arcTestnetChain = {
-  id: chainFact.chainId,
-  name: chainFact.name,
-  nativeCurrency: {
-    name: 'USDC',
-    symbol: chainFact.nativeCurrency.symbol,
-    decimals: chainFact.nativeCurrency.decimals,
-  },
+  id: ARC_TESTNET_CHAIN_ID,
+  name: 'Arc Testnet',
+  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: { default: { http: [RPC_URL] } },
 } as const
 

@@ -9,10 +9,10 @@
  * VITE_IDENTITY_REGISTRY holds the ERC-8004 registry address on Arc Testnet.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { requireAdminKey } from '../_auth'
+import { requireAdminKey } from '../_auth.js'
 import { createWalletClient, createPublicClient, http, parseAbi } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { requireChain } from '../../src/onchain-facts'
+import { requireChain } from '../../src/onchain-facts.js'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

@@ -10,8 +10,8 @@
  * The apiKey is what the agent passes as X-Agent-Key on every proxy call.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { requireAdminKey } from '../_auth'
-import { store } from '../_store'
+import { requireAdminKey } from '../_auth.js'
+import { store } from '../_store.js'
 import { isAddress } from 'viem'
 
 const CORS = {

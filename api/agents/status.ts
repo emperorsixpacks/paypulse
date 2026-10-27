@@ -8,8 +8,8 @@
  *   { registered: false } — not registered, call /api/agents/register first
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { store } from '../_store'
-import { publicClient, CONTRACT_ADDRESS, PAYPULSE_ABI } from '../_chain'
+import { store } from '../_store.js'
+import { publicClient, CONTRACT_ADDRESS, PAYPULSE_ABI } from '../_chain.js'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

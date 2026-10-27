@@ -4,7 +4,7 @@
  * Does NOT return API keys.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { store } from '../_store'
+import { store } from '../_store.js'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
