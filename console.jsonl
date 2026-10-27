@@ -401,3 +401,8 @@
 {"level":"debug","message":"[vite] connected.","timestamp":1793098911523}
 {"level":"debug","message":"[vite] connected.","timestamp":1793099203786}
 {"level":"debug","message":"[vite] connected.","timestamp":1793099244553}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1793099452410}
+{"level":"warn","message":"(previous line repeated 1× more)","timestamp":1793099452492}
+{"level":"debug","message":"[vite] connected.","timestamp":1793099452492}
+{"level":"warn","message":"ObjectMultiplex - orphaned data for stream \"metamask-multichain-provider\"","timestamp":1793099452563}
+{"level":"debug","message":"[vite] connected.","timestamp":1793099495060}
