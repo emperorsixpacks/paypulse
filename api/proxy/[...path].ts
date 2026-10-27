@@ -22,9 +22,9 @@
  *     -H "X-Upstream-Headers: {\"Authorization\":\"Bearer sk-...\"}"
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { store, addLog } from '../_store.js'
-import { publicClient, CONTRACT_ADDRESS, PAYPULSE_ABI, CHARGE_PER_CALL } from '../_chain.js'
-import { runSettle } from '../settle.js'
+import { store, addLog } from '../_store'
+import { publicClient, CONTRACT_ADDRESS, PAYPULSE_ABI, CHARGE_PER_CALL } from '../_chain'
+import { runSettle } from '../settle'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

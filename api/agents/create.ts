@@ -7,8 +7,8 @@
  * Requires CIRCLE_API_KEY + CIRCLE_ENTITY_SECRET in env.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { requireAdminKey } from '../_auth.js'
-import { store } from '../_store.js'
+import { requireAdminKey } from '../_auth'
+import { store } from '../_store'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

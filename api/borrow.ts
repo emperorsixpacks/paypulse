@@ -6,8 +6,8 @@
  * Body: { apiKey: string, amount: string, reason: string }
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { store } from './_store.js'
-import { CONTRACT_ADDRESS, getWalletClient, publicClient } from './_chain.js'
+import { store } from './_store'
+import { CONTRACT_ADDRESS, getWalletClient, publicClient } from './_chain'
 import { parseAbi } from 'viem'
 
 const CORS = {
