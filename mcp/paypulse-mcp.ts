@@ -192,6 +192,13 @@ const TOOLS: Tool[] = [
     },
   },
   {
+    name: 'paypulse_status',
+    description:
+      'Check your own registration status and remaining budget in one call. ' +
+      'Use this first to confirm you are registered and have budget before making calls.',
+    inputSchema: { type: 'object' as const, properties: {} },
+  },
+  {
     name: 'paypulse_borrow',
     description:
       'Request a budget increase from the PayPulse treasury. ' +
@@ -262,6 +269,14 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       case 'paypulse_budget':
         result = await getBudget(a.agentAddress ? String(a.agentAddress) : undefined)
         break
+
+      case 'paypulse_status': {
+        const sr = await fetch(`${BASE}/api/agents/status`, {
+          headers: { 'X-Agent-Key': AGENT_KEY },
+        })
+        result = await sr.json()
+        break
+      }
 
       case 'paypulse_borrow':
         result = await requestBorrow(String(a.amount), String(a.reason))
